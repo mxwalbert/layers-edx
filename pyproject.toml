@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "layers-edx"
 version = "0.1.0"
-description = "A project for layers education and detection"
+description = "A Python port of parts of the NIST EPQ library for electron probe quantification."
 readme = "README.md"
 requires-python = ">=3.8"
 classifiers = [
@@ -16,3 +16,7 @@ classifiers = [
 
 [project.urls]
 "Homepage" = "https://github.com/username/layers-edx"
+"NIST EPQ" = "https://github.com/usnistgov/EPQ"
+
+[tool.setuptools]
+packages = ["layers_edx"]
