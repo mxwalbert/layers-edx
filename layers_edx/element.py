@@ -1,0 +1,228 @@
+from __future__ import annotations
+from layers_edx import read_csv
+from layers_edx.units import ToSI
+
+
+class Element:
+
+    NAME = [
+        'None',
+        'H',
+        'He',
+        'Li', 'Be',
+        'B', 'C', 'N', 'O', 'F', 'Ne',
+        'Na', 'Mg',
+        'Al', 'Si', 'P', 'S', 'Cl', 'Ar',
+        'K', 'Ca',
+        'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe', 'Ni', 'Co', 'Cu', 'Zn', 'Ga', 'Ge', 'As', 'Se', 'Br', 'Kr',
+        'Rb', 'Sr',
+        'Y', 'Zr', 'Nb', 'Mo', 'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd', 'In', 'Sn', 'Sb', 'Te', 'I', 'Xe',
+        'Cs', 'Ba',
+        'La', 'Ce', 'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy', 'Ho', 'Er', 'Tm', 'Yb', 'Lu',
+        'Hf', 'Ta', 'W', 'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg', 'Tl', 'Pb', 'Bi', 'Po', 'At', 'Rn',
+        'Fr', 'Ra',
+        'Ac', 'Th', 'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf', 'Es', 'Fm', 'Md', 'No', 'Lr',
+        'Rf', 'Db', 'Sg', 'Bh', 'Hs', 'Mt', 'Ds', 'Rg', 'Cn', 'Nh', 'Fl', 'Mc', 'Lv', 'Ts', 'Og'
+    ]
+    ATOMIC_WEIGHT = [
+        0.0,
+        1.00794,
+        4.002602,
+        6.941, 9.012182,
+        10.811, 12.0107, 14.0067, 15.9994, 18.998, 20.1797,
+        22.989770, 24.3050,
+        26.981538, 28.0855, 30.973761, 32.065, 35.453, 39.948,
+        39.0983, 40.078,
+        44.955910, 47.867, 50.9415, 51.9961, 54.938, 55.845, 58.933, 58.6934,
+        63.546, 65.409, 69.723, 72.64, 74.92160, 78.96, 79.904, 83.798,
+        85.4678, 87.62,
+        88.905, 91.224, 92.906, 95.94, 98., 101.07, 102.90550, 106.42,
+        107.8682, 112.411, 114.818, 118.710, 121.760, 127.60, 126.904, 131.293,
+        132.904, 137.327,
+        138.9055, 140.116, 140.907, 144.24, 145., 150.36, 151.964, 157.25,
+        158.925, 160.500, 164.930, 167.259, 168.934, 173.04, 174.967,
+        178.49, 180.9479, 183.84, 186.207, 190.23, 192.217, 195.078, 196.96655,
+        200.59, 204.3833, 207.2, 208.980, 209., 210., 222.,
+        223., 226.,
+        227., 232.0381, 231.03588, 238.02891, 237., 244., 243., 247.,
+        247., 251., 252., 257., 258., 259., 262.,
+        261., 262., 266., 264., 277., 268., 281., 272.,
+        285., 286., 289., 290., 293., 294., 294.
+    ]
+
+    IONIZATION_ENERGY = [v[0] for v in read_csv('IonizationEnergies', value_offset=1, conversion=ToSI.ev, fill_value=float('nan'))]
+
+    @classmethod
+    def from_name(cls, name: str) -> int:
+        return cls.NAME.index(name)
+
+    def __init__(self, element: int | str):
+        self._atomic_number = element if type(element) == int else self.NAME.index(element)
+
+    def __lt__(self, other: Element):
+        return self.atomic_number < other.atomic_number
+
+    def __eq__(self, other: Element) -> bool:
+        return self.atomic_number == other.atomic_number
+
+    def __hash__(self) -> int:
+        return self.atomic_number
+
+    def __str__(self) -> str:
+        return f'Element.{self.name}'
+
+    @property
+    def atomic_number(self) -> int:
+        """The nuclear charge number, i.e., the number of protons, of the element."""
+        return self._atomic_number
+
+    @property
+    def name(self) -> str:
+        """The chemical symbol of the element."""
+        return self.NAME[self.atomic_number]
+
+    @property
+    def atomic_weight(self) -> float:
+        """The standard atomic weight of the element (g/mol)."""
+        return self.ATOMIC_WEIGHT[self.atomic_number]
+
+    @property
+    def ionization_energy(self) -> float:
+        """The first ionization energy for this element (J)."""
+        return self.IONIZATION_ENERGY[self.atomic_number]
+
+    @property
+    def mass(self) -> float:
+        """The mass of a single atom of the element (kg)."""
+        return ToSI.amu(self.atomic_weight)
+
+
+class Composition:
+
+    @staticmethod
+    def normalize_fractions(fractions: list[float]) -> list[float]:
+        """Divides each of the values by the sum of all values."""
+        fractions_sum = sum(fractions)
+        return [fraction / fractions_sum for fraction in fractions]
+
+    @classmethod
+    def atomic_from_weight(cls, elements: list[Element], fractions: list[float]) -> list[float]:
+        """Computes the atomic fractions from the provided `elements` and weight `fractions`."""
+        atomic_fractions = [fraction / element.atomic_weight for element, fraction in zip(elements, fractions)]
+        return cls.normalize_fractions(atomic_fractions)
+
+    @classmethod
+    def weight_from_atomic(cls, elements: list[Element], fractions: list[float]) -> list[float]:
+        """Computes the weight fractions from the provided `elements` and atomic `fractions`."""
+        weight_fractions = [fraction * element.atomic_weight for element, fraction in zip(elements, fractions)]
+        return cls.normalize_fractions(weight_fractions)
+
+    def __init__(self, elements: list[Element], fractions: list[float], weight: bool = True, normalize: bool = True):
+        self._elements = elements
+        if weight:
+            self._weight_fractions = fractions
+        else:
+            self._weight_fractions = self.weight_from_atomic(elements, fractions)
+        if normalize:
+            self.normalize()
+
+    def copy(self) -> Composition:
+        """Initializes a new object with shallow copies of the `elements` and `weight_fractions` lists."""
+        return Composition(self._elements.copy(), self._weight_fractions.copy(), normalize=False)
+
+    @property
+    def elements(self) -> list[Element]:
+        """The list of elements which are contained in this composition."""
+        return self._elements
+
+    @property
+    def atomic_fractions(self) -> dict[Element, float]:
+        """A dictionary mapping the elements to their atomic fractions as defined in this composition.
+        Normalized to sum 100%."""
+        return dict(zip(self.elements, self.atomic_from_weight(self.elements, self._weight_fractions)))
+
+    @property
+    def raw_weight_fractions(self) -> dict[Element, float]:
+        """A dictionary mapping the elements to their weight fractions as defined in this composition."""
+        return dict(zip(self.elements, self._weight_fractions))
+
+    @property
+    def weight_fractions(self) -> dict[Element, float]:
+        """A dictionary mapping the elements to their weight fractions which are normalized to sum 100%."""
+        fractions = self.normalize_fractions(self._weight_fractions)
+        return dict(zip(self.elements, fractions))
+
+    @property
+    def sum_weight_fractions(self) -> float:
+        """The non-normalized sum of the weight fractions."""
+        return sum(self._weight_fractions)
+
+    @property
+    def atoms_per_kg(self) -> dict[Element, float]:
+        """Number of atoms of the elements in one kilogram of material with this composition."""
+        return {e: f / e.mass for e, f in self.weight_fractions.items()}
+
+    @property
+    def mean_atomic_number(self) -> float:
+        return sum([e.atomic_number * f for e, f in self.weight_fractions.items()])
+
+    def normalize(self):
+        """Normalizes the weight fractions."""
+        self._weight_fractions = self.normalize_fractions(self._weight_fractions)
+
+    def weight_difference(self, other: Composition, normalized: bool = True) -> dict[Element, float]:
+        """Calculates the differences of two composition objects: self - other."""
+        differences = {}
+        self_fractions = self.weight_fractions if normalized else self.raw_weight_fractions
+        other_fractions = other.weight_fractions if normalized else other.raw_weight_fractions
+        for e in (self_fractions.keys() | other_fractions.keys()):
+            self_f = self_fractions[e] if e in self_fractions else 0
+            other_f = other_fractions[e] if e in other_fractions else 0
+            differences[e] = self_f - other_f
+        return differences
+
+
+class Material:
+
+    DENSITY = [
+        0.0,
+        0.0,
+        0.0,
+        0.534, 1.85,
+        2.35, 2.25, 0.0, 0.0, 0.0, 0.0,
+        0.97, 1.74,
+        2.70, 2.42, 1.83, 1.92, 0.0, 0.0,
+        0.86, 1.55,
+        3.02, 4.50, 5.98, 7.14, 7.41, 7.88, 8.71, 8.88, 8.96, 7.10, 5.93, 5.46, 5.73, 4.82, 0.0, 0.0,
+        1.53, 2.56,
+        4.47, 6.40, 8.57, 10.22, 11.5, 12.1, 12.44, 12.16, 10.49, 8.65, 7.28, 7.3, 6.62, 6.25, 4.94, 0.0,
+        1.87, 3.50,
+        6.15, 6.90, 6.48, 6.96, -1.0, 7.75, 5.26, 7.95, 8.27, 8.54, 8.80, 9.05, 9.33, 6.97, 9.84,
+        13.3, 16.6, 19.3, 21.0, 22.5, 22.42, 21.45, 19.3, 14.19, 11.86, 11.34, 9.78, 9.3, -1.0, 0.0,
+        -1.0, 5.0,
+        -1.0, 11.7, 15.3, 18.7, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0,
+        -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0
+    ]
+
+    @classmethod
+    def density_from_composition(cls, composition: Composition) -> float:
+        density = 0
+        for element, fraction in composition.weight_fractions.items():
+            density += fraction * cls.DENSITY[element.atomic_number]
+        return density
+
+    def __init__(self, composition: Composition | Element, density: float = None):
+        if isinstance(composition, Element):
+            composition = Composition([composition], [1.0])
+        self._composition = composition
+        self._density = self.density_from_composition(composition) if density is None else density
+
+    @property
+    def composition(self) -> Composition:
+        """The composition of the material."""
+        return self._composition
+
+    @property
+    def density(self) -> float:
+        """The density of the material (g*cm-3)."""
+        return self._density
