@@ -7,37 +7,13 @@ from layers_edx.quantification.quantify_spectrum.reference_spectrum import Refer
 from layers_edx.quantification.quantify_spectrum.quantify_spectrum import QuantifySpectrum
 from layers_edx.kratio import KRatioSet
 from layers_edx.roi import RegionOfInterestSet, RegionOfInterest
-from layers_edx.element import Element, Composition
 from layers_edx.spectrum.base_spectrum import BaseSpectrum
 from layers_edx.spectrum.spectrum_properties import SpectrumProperties
-from layers_edx.xrt import XRayTransition
-from layers_edx.units import ToSI
 
-
-@pytest.fixture
-def mock_element():
-    return Element('Si')
-
-@pytest.fixture
-def mock_composition(mock_element):
-    return Composition([mock_element], [1.0])
-
-@pytest.fixture
-def mock_xrt(mock_element):
-    return XRayTransition(mock_element, 'KA1')
-
-@pytest.fixture
-def mock_beam_energy():
-    return 15.
-
-@pytest.fixture
-def mock_spectrum_data():
-    data = np.zeros(150)
-    data[17] = 100.
-    return data
 
 @pytest.fixture
 def mock_detector(mock_spectrum_data):
+    """Override mock_detector with 150 channels for spectrum tests"""
     det_prop = DetectorProperties(
         channel_count=mock_spectrum_data.shape[0],
         area=100.0,
@@ -54,11 +30,13 @@ def mock_detector(mock_spectrum_data):
     )
 
 @pytest.fixture
-def mock_spectrum_properties(mock_detector, mock_beam_energy):
+def mock_spectrum_properties(mock_detector):
+    """Override with 15 keV beam energy for spectrum tests"""
     return SpectrumProperties(
         detector=mock_detector,
-        beam_energy=mock_beam_energy
+        beam_energy=15.0
     )
+
 
 @pytest.fixture
 def mock_spectrum(mock_spectrum_properties, mock_spectrum_data):

@@ -8,10 +8,20 @@ version = "0.1.0"
 description = "A Python port of parts of the NIST EPQ library for electron probe quantification."
 readme = "README.md"
 requires-python = ">=3.8"
+dependencies = [
+    "numpy",
+    "scipy",
+]
+
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
 ]
 
 [project.urls]

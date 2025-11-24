@@ -1,0 +1,115 @@
+# GitHub Actions workflow for CI/CD
+# This workflow runs tests on push and pull requests
+
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test-python:
+    name: Python Tests
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e ".[dev]"
+    
+    - name: Run Python tests (non-EPQ)
+      run: |
+        pytest -v -m "not epq"
+    
+    - name: Upload coverage
+      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
+      uses: codecov/codecov-action@v3
+
+  test-epq:
+    name: EPQ Cross-Validation Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    
+    - name: Set up Java 21
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '21'
+    
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e ".[dev]"
+    
+    - name: Cache EPQ build
+      uses: actions/cache@v4
+      with:
+        path: .venv/share/java/EPQ
+        key: epq-${{ runner.os }}-${{ hashFiles('.venv/share/java/EPQ/pom.xml') }}
+        restore-keys: |
+          epq-${{ runner.os }}-
+    
+    - name: Set up EPQ library
+      run: |
+        mkdir -p .venv/share/java
+        cd .venv/share/java
+        if [ ! -d "EPQ" ]; then
+          git clone https://github.com/usnistgov/EPQ.git
+        fi
+        cd EPQ
+        mvn compile
+        mvn dependency:copy-dependencies -DoutputDirectory=target/dependency
+    
+    - name: Run EPQ cross-validation tests
+      run: |
+        pytest -v -m epq
+
+  lint:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    
+    - name: Install linting tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 black isort mypy
+    
+    - name: Check with flake8
+      run: |
+        flake8 layers_edx --count --select=E9,F63,F7,F82 --show-source --statistics
+    
+    - name: Check with black
+      run: |
+        black --check layers_edx
+    
+    - name: Check with isort
+      run: |
+        isort --check-only layers_edx

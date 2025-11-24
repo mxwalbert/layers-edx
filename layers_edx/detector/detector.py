@@ -239,7 +239,7 @@ class EDSCalibration(DetectorCalibration):
 
     def is_visible(self, xrt: XRayTransition, energy: float) -> bool:
         """Checks if the specified `xrt` is visible at this beam `energy`."""
-        if xrt.edge_energy < (energy / self.MIN_OVERVOLTAGE):
+        if xrt.edge_energy > (energy / self.MIN_OVERVOLTAGE):
             return False
         for family, element in enumerate(self.FIRST_ELEMENT):
             if xrt.family == family:

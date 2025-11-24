@@ -52,6 +52,8 @@ class TransitionProbabilities:
         def transitions(cls, ionized: AtomicShell, min_weight: float) -> dict[XRayTransition, float]:
             min_weight = 1e-10 if min_weight < 1e-10 else min_weight
             all_xrt: dict[XRayTransition, float] = {data[0]: data[2] for data in cls.RADIATIVE[ionized.element] if data[1] == ionized.shell}
+            if not all_xrt:
+                return {}
             max_probability = max(all_xrt.values())
             return {xrt: probability for xrt, probability in all_xrt.items() if probability >= (min_weight * max_probability)}
 

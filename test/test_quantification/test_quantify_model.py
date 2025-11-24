@@ -4,34 +4,16 @@ from layers_edx.quantification.quantify_model.reference_model import ReferenceMo
 from layers_edx.quantification.quantify_model.quantify_model import QuantifyModel
 from layers_edx.kratio import KRatioSet
 from layers_edx.roi import RegionOfInterestSet, RegionOfInterest
-from layers_edx.element import Element, Composition
-from layers_edx.xrt import XRayTransition
-from layers_edx.units import ToSI
 
-
-@pytest.fixture
-def mock_element():
-    return Element('Si')
-
-@pytest.fixture
-def mock_composition(mock_element):
-    return Composition([mock_element], [1.0])
-
-@pytest.fixture
-def mock_xrt(mock_element):
-    return XRayTransition(mock_element, 'KA1')
 
 @pytest.fixture
 def mock_model(mock_xrt):
     return {mock_xrt: 100.0}
 
 @pytest.fixture
-def mock_beam_energy():
-    return ToSI.kev(15)
+def mock_standard_model(mock_element, mock_composition, mock_model, mock_beam_energy_15kev):
+    return StandardModel(mock_model, mock_beam_energy_15kev, mock_element, mock_composition)
 
-@pytest.fixture
-def mock_standard_model(mock_element, mock_composition, mock_model, mock_beam_energy):
-    return StandardModel(mock_model, mock_beam_energy, mock_element, mock_composition)
 
 @pytest.fixture
 def mock_reference_model(mock_composition, mock_model):
@@ -50,9 +32,10 @@ def test_reference_model(mock_xrt, mock_reference_model):
     assert mock_reference_model.model[mock_xrt] == 100.0
 
 @pytest.fixture
-def mock_quantify_model(mock_element, mock_standard_model, mock_beam_energy):
+def mock_quantify_model(mock_element, mock_standard_model, mock_beam_energy_15kev):
     standards = {mock_element: mock_standard_model}
-    return QuantifyModel(mock_beam_energy, standards)
+    return QuantifyModel(mock_beam_energy_15kev, standards)
+
 
 def test_quantify_model_create_reference(mock_quantify_model, mock_standard_model):
     reference = mock_quantify_model.create_reference(mock_standard_model)
