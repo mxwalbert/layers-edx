@@ -1,4 +1,3 @@
-"""EPQ cross-validation tests for Mean Ionization Potential"""
 import pytest
 import sys
 from pathlib import Path
@@ -12,6 +11,29 @@ from conftest import run_java_test, compare_results
 
 # Path to corresponding Java test
 JAVA_TEST = Path(__file__).parent / "test_mip.java"
+
+
+def test_mip_element():
+    si = Element('Si')
+    mip = MeanIonizationPotential.compute(si)
+    assert mip > 0
+    # MIP for Si (Z=14) is approx 173 eV
+    assert mip == pytest.approx(ToSI.ev(173), rel=0.1)
+
+
+def test_mip_composition():
+    si = Element('Si')
+    o = Element('O')
+    sio2 = Composition([si, o], [1.0, 2.0], weight=False)
+    
+    mip = MeanIonizationPotential.compute_composition(sio2)
+    assert mip > 0
+    
+    # Should be between MIP of Si and O
+    mip_si = MeanIonizationPotential.compute(si)
+    mip_o = MeanIonizationPotential.compute(o)
+    
+    assert min(mip_si, mip_o) < mip < max(mip_si, mip_o)
 
 
 @pytest.mark.epq

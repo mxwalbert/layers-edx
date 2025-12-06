@@ -152,3 +152,6 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "epq: EPQ cross-validation tests (requires Java and EPQ jar)"
     )
+    config.addinivalue_line(
+        "markers", "epq_env: EPQ environment setup verification tests"
+    )

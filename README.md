@@ -1,6 +1,6 @@
 # layers-edx
 
-A Python port of parts of the [NIST EPQ (Electron Probe Quantification) library](https://github.com/usnistgov/EPQ) for X-ray microanalysis and electron probe quantification.
+A Python port of the [NIST EPQ (Electron Probe Quantification) library](https://github.com/usnistgov/EPQ) for X-ray microanalysis and electron probe quantification.
 
 ## Features
 
@@ -51,66 +51,6 @@ for xrt in k_transitions:
     print(f"{xrt.name}: {xrt.energy_ev:.2f} eV")
 ```
 
-## Development
-
-### Prerequisites
-
-For EPQ cross-validation testing, you'll need:
-- **Java 21+** - [Download from Adoptium](https://adoptium.net/)
-- **Apache Maven** - [Download from maven.apache.org](https://maven.apache.org/download.cgi)
-
-### Setup for Contributors
-
-```bash
-# Install development dependencies
-pip install -e ".[dev]"
-
-# Set up EPQ library for cross-validation tests (Windows)
-.\scripts\setup_epq.ps1
-
-# Run tests
-pytest
-```
-
-For detailed setup instructions, see [CONTRIBUTING.md](CONTRIBUTING.md).
-
-## Project Structure
-
-```
-layers-edx/
-├── layers_edx/          # Main Python package
-│   ├── element.py       # Element properties
-│   ├── xrt.py          # X-ray transitions
-│   ├── units.py        # Unit conversions
-│   └── ...
-├── test/               # Test suite with EPQ validation
-├── scripts/            # Setup and utility scripts
-└── src/                # Example scripts
-```
-
-## Testing
-
-```bash
-# Run all tests
-pytest
-
-# Run with coverage
-pytest --cov=layers_edx
-
-# Run only EPQ cross-validation tests
-pytest -m epq
-```
-
-## Cross-Validation with EPQ
-
-This project validates its Python implementation against the original NIST EPQ Java library. The test suite includes:
-
-- **X-ray Transitions** (`test_xrt`): Validates transition energies and weights
-- **Mass Absorption Coefficients** (`test_mac`): Validates MAC calculations
-- **Mean Ionization Potentials** (`test_mip`): Validates MIP calculations
-
-See [EPQ_API_REFERENCE.md](EPQ_API_REFERENCE.md) for detailed API mapping.
-
 ## References
 
 - [NIST EPQ Library (Java)](https://github.com/usnistgov/EPQ)
@@ -122,8 +62,13 @@ Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for set
 
 ## License
 
-This project follows the NIST EPQ library's public domain status pursuant to Title 17 Section 105 of the United States Code.
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
 
-## Acknowledgments
+This Python implementation is derived from the [NIST EPQ library](https://github.com/usnistgov/EPQ), which is in the public domain pursuant to Title 17 Section 105 of the United States Code. See the [NOTICE](NOTICE) file for attribution details.
 
-This project is based on the NIST EPQ library developed by the National Institute of Standards and Technology (NIST).
+## Support
+
+If you encounter problems with the software, please:
+1. Check existing [Issues](https://github.com/yourusername/layers-edx/issues)
+2. Open a new issue with details about your problem
+3. Include your OS, Python version and other details about your environment

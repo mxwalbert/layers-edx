@@ -1,4 +1,3 @@
-"""EPQ cross-validation tests for Mass Absorption Coefficient"""
 import pytest
 import sys
 from pathlib import Path
@@ -12,6 +11,37 @@ from conftest import run_java_test, compare_results
 
 # Path to corresponding Java test
 JAVA_TEST = Path(__file__).parent / "test_mac.java"
+
+
+def test_mac_element():
+    si = Element('Si')
+    energy = ToSI.kev(1.74) # Si Ka energy
+    
+    # MAC of Si for Si Ka should be significant
+    mac = MassAbsorptionCoefficient.compute(si, energy)
+    assert mac > 0
+    
+    # MAC decreases with energy (away from edges)
+    mac_high = MassAbsorptionCoefficient.compute(si, ToSI.kev(10.0))
+    assert mac > mac_high
+
+
+def test_mac_composition():
+    si = Element('Si')
+    o = Element('O')
+    sio2 = Composition([si, o], [1.0, 2.0], weight=False)
+    energy = ToSI.kev(1.74)
+    
+    mac_sio2 = MassAbsorptionCoefficient.compute_composition(sio2, energy)
+    mac_si = MassAbsorptionCoefficient.compute(si, energy)
+    mac_o = MassAbsorptionCoefficient.compute(o, energy)
+    
+    # MAC of composition is weighted average
+    w_si = sio2.weight_fractions[si]
+    w_o = sio2.weight_fractions[o]
+    expected = w_si * mac_si + w_o * mac_o
+    
+    assert mac_sio2 == pytest.approx(expected)
 
 
 @pytest.mark.epq

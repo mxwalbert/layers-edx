@@ -39,11 +39,9 @@ cd layers-edx
 python -m venv .venv
 
 # Activate virtual environment
-# Windows (PowerShell):
+# - Windows (PowerShell):
 .venv\Scripts\Activate.ps1
-# Windows (CMD):
-.venv\Scripts\activate.bat
-# Linux/Mac:
+# - Linux/Mac:
 source .venv/bin/activate
 
 # Install dependencies
@@ -52,9 +50,12 @@ pip install -e ".[dev]"
 
 ### 3. Set Up EPQ Library (for cross-validation tests)
 
-**Option A: Automated Setup (Recommended - Windows)**
-```powershell
+**Option A: Automated Setup (Recommended)**
+```bash
+# - Windows (PowerShell):
 .\scripts\setup_epq.ps1
+# - Linux/Mac:
+./scripts/setup_epq.sh
 ```
 
 **Option B: Manual Setup**
@@ -79,39 +80,10 @@ cd ../../../..
 
 ### 4. Verify Setup
 
-Run the test suite to verify everything is working:
+Run verification test to check if the EPQ environment is properly configured:
 
 ```bash
-# Run all tests
-pytest
-
-# Run only EPQ cross-validation tests
-pytest -m epq
-
-# Run specific test file
-pytest test/test_xrt/test_xrt.py
-```
-
-## Project Structure
-
-```
-layers-edx/
-├── .venv/                      # Virtual environment (not in git)
-│   └── share/java/EPQ/         # EPQ Java library for testing
-├── layers_edx/                 # Main Python package
-│   ├── element.py
-│   ├── xrt.py
-│   └── ...
-├── test/                       # Test suite
-│   ├── conftest.py             # Pytest configuration
-│   ├── test_xrt/               # X-ray transition tests
-│   │   ├── test_xrt.py         # Python tests
-│   │   └── test_xrt.java       # EPQ reference implementation
-│   └── test_material_properties/
-├── scripts/                    # Setup and utility scripts
-│   └── setup_epq.ps1           # EPQ setup automation
-├── pyproject.toml              # Python project configuration
-└── README.md
+pytest -m epq_env -v
 ```
 
 ## Running Tests
@@ -139,6 +111,10 @@ pytest -m epq
 # Run specific EPQ test
 pytest test/test_xrt/test_xrt.py::test_xrt_silicon_k_vs_epq -v
 ```
+
+**Test Markers:**
+- `@pytest.mark.epq` - EPQ cross-validation tests
+- `@pytest.mark.epq_env` - EPQ environment setup tests
 
 **How it works:**
 1. Compiles and runs Java test files (e.g., `test_xrt.java`)
@@ -212,11 +188,8 @@ The repository includes `.vscode/settings.json` (gitignored) which configures:
 
 After running the setup, VS Code should automatically recognize the Java classes.
 
-## Questions?
+## Need support?
 
-If you encounter issues not covered here, please:
-1. Check existing [Issues](https://github.com/yourusername/layers-edx/issues)
-2. Open a new issue with details about your problem
-3. Include your OS, Python version, and Java version
+If you encounter problems setting up the environment, please open an [issue](https://github.com/yourusername/layers-edx/issues) (check existing issues first!).
 
 Thank you for contributing! 🎉
