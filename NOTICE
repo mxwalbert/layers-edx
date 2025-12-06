@@ -1,0 +1,18 @@
+layers-edx
+
+This project is a Python port of the NIST Electron Probe Quantification (EPQ) library.
+
+
+NOTICE: Portions of this software are derived from the NIST EPQ library
+
+The original NIST EPQ library is in the public domain pursuant to Title 17 
+Section 105 of the United States Code. This software is not subject to 
+copyright protection and is in the public domain.
+
+Source: https://github.com/usnistgov/EPQ
+Institution: National Institute of Standards and Technology (NIST)
+Authors: Nicholas W. M. Ritchie and contributors
+
+The algorithms, formulas, and data structures in this Python implementation
+are derived from the EPQ Java library. This Python implementation is licensed
+under the Apache License 2.0 (see LICENSE file).
