@@ -180,14 +180,6 @@ Make sure you've installed the package in development mode:
 pip install -e ".[dev]"
 ```
 
-## VSCode Setup (Optional)
-
-The repository includes `.vscode/settings.json` (gitignored) which configures:
-- Java classpath for EPQ library
-- Python environment
-
-After running the setup, VS Code should automatically recognize the Java classes.
-
 ## Need support?
 
 If you encounter problems setting up the environment, please open an [issue](https://github.com/yourusername/layers-edx/issues) (check existing issues first!).
