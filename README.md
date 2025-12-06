@@ -15,7 +15,7 @@ A Python port of the [NIST EPQ (Electron Probe Quantification) library](https://
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/layers-edx.git
+git clone https://github.com/mxwalbert/layers-edx.git
 cd layers-edx
 
 # Create and activate virtual environment
@@ -69,6 +69,6 @@ This Python implementation is derived from the [NIST EPQ library](https://github
 ## Support
 
 If you encounter problems with the software, please:
-1. Check existing [Issues](https://github.com/yourusername/layers-edx/issues)
+1. Check existing [Issues](https://github.com/mxwalbert/layers-edx/issues)
 2. Open a new issue with details about your problem
 3. Include your OS, Python version and other details about your environment

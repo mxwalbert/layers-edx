@@ -28,7 +28,7 @@ Thank you for your interest in contributing to layers-edx! This guide will help 
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/layers-edx.git
+git clone https://github.com/mxwalbert/layers-edx.git
 cd layers-edx
 ```
 
@@ -182,6 +182,6 @@ pip install -e ".[dev]"
 
 ## Need support?
 
-If you encounter problems setting up the environment, please open an [issue](https://github.com/yourusername/layers-edx/issues) (check existing issues first!).
+If you encounter problems setting up the environment, please open an [issue](https://github.com/mxwalbert/layers-edx/issues) (check existing issues first!).
 
 Thank you for contributing! 🎉
