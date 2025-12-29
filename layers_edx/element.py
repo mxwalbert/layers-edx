@@ -174,7 +174,7 @@ class Composition:
 
     def weight_difference(self, other: Composition, normalized: bool = True) -> dict[Element, float]:
         """Calculates the differences of two composition objects: self - other."""
-        differences = {}
+        differences: dict[Element, float] = {}
         self_fractions = self.weight_fractions if normalized else self.raw_weight_fractions
         other_fractions = other.weight_fractions if normalized else other.raw_weight_fractions
         for e in (self_fractions.keys() | other_fractions.keys()):
