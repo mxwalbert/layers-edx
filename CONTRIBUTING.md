@@ -123,10 +123,24 @@ pytest test/test_xrt/test_xrt.py::test_xrt_silicon_k_vs_epq -v
 
 ## Code Style
 
-We follow PEP 8 for Python code. Consider using:
-- **Black** for code formatting
-- **isort** for import sorting
-- **flake8** for linting
+We follow PEP 8 for Python code with one exception: we use a line length limit of **88 characters** (instead of the PEP8 default of 79). This choice, following [SciPy's rationale](https://docs.scipy.org/doc/scipy/dev/contributor/pep8.html), strikes a balance between producing shorter files, reducing linter errors, maintaining reasonably short lines, and enabling side-by-side file viewing.
+
+We use **[ruff](https://github.com/astral-sh/ruff)** as our unified linter and code formatter.
+
+### Running Code Quality Tools
+
+```bash
+# Format code
+ruff format
+
+# Check code for linting issues
+ruff check
+
+# Auto-fix fixable issues
+ruff check --fix
+```
+
+Ruff is configured in `pyproject.toml`
 
 ## Making Changes
 
