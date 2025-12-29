@@ -57,7 +57,7 @@ class Element:
         return cls.NAME.index(name)
 
     def __init__(self, element: int | str):
-        self._atomic_number = element if type(element) == int else self.NAME.index(element)
+        self._atomic_number = element if isinstance(element, int) else self.NAME.index(element)
 
     def __lt__(self, other: Element):
         return self.atomic_number < other.atomic_number
