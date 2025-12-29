@@ -213,7 +213,7 @@ class Material:
             density += fraction * cls.DENSITY[element.atomic_number]
         return density
 
-    def __init__(self, composition: Composition | Element, density: float = None):
+    def __init__(self, composition: Composition | Element, density: float | None = None):
         if isinstance(composition, Element):
             composition = Composition([composition], [1.0])
         self._composition = composition
