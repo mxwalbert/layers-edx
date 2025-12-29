@@ -62,7 +62,9 @@ class Element:
     def __lt__(self, other: Element):
         return self.atomic_number < other.atomic_number
 
-    def __eq__(self, other: Element) -> bool:
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Element):
+            return NotImplemented
         return self.atomic_number == other.atomic_number
 
     def __hash__(self) -> int:
