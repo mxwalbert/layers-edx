@@ -386,11 +386,19 @@ class AtomicShell:
 
     @property
     def principal_quantum_number(self) -> int:
+        """
+        Gets the principal quantum number (n) associated with this shell.
+
+        :return: The principal quantum number for this shell (1-7 for K-Q shells)
+        :rtype: int
+        :raises ValueError: If the shell name is invalid
+        """
         n = 1
         for letter in ["K", "L", "M", "N", "O", "P", "Q"]:
             if letter in self.name:
                 return n
             n += 1
+        raise ValueError(f"Invalid shell name: {self.name}")
 
     @property
     def edge_energy(self) -> float:
