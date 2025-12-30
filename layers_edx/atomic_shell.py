@@ -349,7 +349,7 @@ class AtomicShell:
 
     def __init__(self, element: Element, shell: int | str):
         self._element = element
-        self._shell = self.from_name(shell) if type(shell) == str else shell
+        self._shell = self.from_name(shell) if isinstance(shell, str) else shell
 
     @property
     def element(self) -> Element:
