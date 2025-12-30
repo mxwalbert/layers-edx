@@ -562,7 +562,7 @@ class XRayTransitionSet:
         """Constructs an ``XRayTransitionSet`` consisting of all transitions for the specified `element` between the
         `low_energy` and `high_energy` having a `min_weight`. Creates an empty `xrts` if `populate` is set to False."""
         self._element = element
-        self._xrts = set()
+        self._xrts: set[XRayTransition] = set()
         if populate is False:
             return
         for transition in range(len(NAME)):
