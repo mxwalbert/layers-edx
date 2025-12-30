@@ -248,7 +248,7 @@ DESTINATION_SHELL = [
         "NV",
     ]
 ]
-LINE_WEIGHT = read_csv("LineWeights", row_offset=1)
+LINE_WEIGHT: llf = read_csv("LineWeights", row_offset=1)
 
 
 def transition_from_name(name: str) -> int:
