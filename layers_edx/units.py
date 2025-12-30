@@ -3,24 +3,26 @@ from typing import Tuple
 from layers_edx import BASE_PATH
 
 
-def get_physical_constant(name: str, unit: bool = False) -> float | Tuple[float, str] | None:
-    with open(f'{BASE_PATH}/resources/CODATA2018.txt') as file:
+def get_physical_constant(
+    name: str, unit: bool = False
+) -> float | Tuple[float, str] | None:
+    with open(f"{BASE_PATH}/resources/CODATA2018.txt") as file:
         for line in file.readlines():
-            if name == line[:len(name)]:
-                value = float(line[60:].split('  ')[0].replace('...', '').replace(' ', ''))
-                return (value, line[110:].replace('\n', '')) if unit else value
+            if name == line[: len(name)]:
+                value = float(
+                    line[60:].split("  ")[0].replace("...", "").replace(" ", "")
+                )
+                return (value, line[110:].replace("\n", "")) if unit else value
 
 
 class PhysicalConstants:
-
-    ElementaryCharge: float = get_physical_constant('elementary charge')
-    AMU: float = get_physical_constant('unified atomic mass unit')
-    BohrRadius: float = get_physical_constant('Bohr radius')
-    ElectronRestMass: float = get_physical_constant('electron mass energy equivalent')
+    ElementaryCharge: float = get_physical_constant("elementary charge")
+    AMU: float = get_physical_constant("unified atomic mass unit")
+    BohrRadius: float = get_physical_constant("Bohr radius")
+    ElectronRestMass: float = get_physical_constant("electron mass energy equivalent")
 
 
 class ToSI:
-
     @classmethod
     def compute(cls, value: float, factor: float) -> float:
         return value * factor
@@ -90,8 +92,8 @@ class ToSI:
         """Unified atomic mass unit."""
         return cls.compute(value, PhysicalConstants.AMU)
 
-class FromSI(ToSI):
 
+class FromSI(ToSI):
     @classmethod
     def compute(cls, value: float, factor: float) -> float:
         return value / factor
