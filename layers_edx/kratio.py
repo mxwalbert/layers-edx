@@ -35,14 +35,14 @@ class KRatioSet:
         """
         self._data[xrt_set] = kratio
 
-    def remove(self, xrt_set):
+    def remove(self, xrt_set: XRayTransitionSet):
         """
         Removes the `xrt_set` and the associated k-ratio value from the data dictionary.
         """
         if xrt_set in self.xrt_sets:
             del self._data[xrt_set]
 
-    def find(self, xrt_set: XRayTransitionSet) -> float:
+    def find(self, xrt_set: XRayTransitionSet) -> float | None:
         """
         Checks if the `xrt_set` already has an associated k-ratio. Otherwise, checks
         for a similar `XRayTransitionSet` to return its value.
@@ -67,7 +67,7 @@ class KRatioSet:
 
     def kratio_from_xrt_set(self, xrt_set: XRayTransitionSet) -> float:
         """Returns the non-negative k-ratio value associated with an `xrt_set`."""
-        kratio = self.find(xrt_set)
+        kratio = self.kratio_from_xrt_set_raw(xrt_set)
         return kratio if kratio > 0.0 else 0.0
 
     def kratio_from_xrt(self, xrt: XRayTransition) -> float:
