@@ -1,6 +1,5 @@
 import math
 from abc import ABC, abstractmethod
-import layers_edx.spectrum.spectrum_properties
 from layers_edx.element import Composition, Element
 from layers_edx.units import FromSI, ToSI
 from layers_edx.detector.eds_detector import EDSDetector
@@ -80,7 +79,7 @@ class BremsstrahlungAnalytic(ABC):
         for element in composition.elements:
             roi_set.add_xrt_set(XRayTransitionSet(element, e_min, e0))
 
-        tmp = []
+        tmp: list[tuple[int, int]] = []
         min_ch = spectrum.channel_from_energy(FromSI.ev(e_min))
         for roi in roi_set.rois:
             max_ch = spectrum.channel_from_energy(FromSI.ev(roi.low_energy))
@@ -90,7 +89,7 @@ class BremsstrahlungAnalytic(ABC):
         max_ch = spectrum.channel_from_energy(FromSI.ev(e0))
         tmp.append((min_ch, max_ch))
 
-        intervals = []
+        intervals: list[tuple[int, int]] = []
         if first_ch < spectrum.channel_count // 10:
             intervals.append((first_ch, first_ch + 4))
         width = 20
@@ -99,9 +98,7 @@ class BremsstrahlungAnalytic(ABC):
                 break
             j = 2 * i if i < 4 else 2 * i + 1
             min_ch = spectrum.channel_from_energy(j * 2000.0)
-            max_ch = layers_edx.spectrum.spectrum_properties.bound(
-                spectrum.channel_from_energy((j + 1) * 2000.0)
-            )
+            max_ch = spectrum.bound(spectrum.channel_from_energy((j + 1) * 2000.0))
             if (
                 ToSI.ev(spectrum.max_energy_from_channel(min_ch)) > e0
                 or min_ch >= spectrum.channel_count
