@@ -28,14 +28,17 @@ class BremsstrahlungAnalytic(ABC):
 
     @abstractmethod
     def compute(self, energy: float) -> float:
-        """Computes the emitted bremsstrahlung intensity at the specified photon `energy`.
+        """
+        Computes the emitted bremsstrahlung intensity at the specified photon `energy`.
 
         :param energy: The photon energy in J.
         """
 
     def to_detector(self, detector: EDSDetector, flux: float):
-        """Compute the bremsstrahlung spectrum as measured by the specified `detector` at the specified beam `flux`
-        (nA*s)."""
+        """
+        Compute the bremsstrahlung spectrum as measured by the specified `detector`
+        at the specified beam `flux` (nA*s).
+        """
         f = detector.calibration.channel_width / 10.0
         for channel in range(detector.properties.channel_count):
             energy = ToSI.ev(detector.spectrum.average_energy_from_channel(channel))
@@ -64,8 +67,10 @@ class BremsstrahlungAnalytic(ABC):
     def fit_background_composition(
         self, detector: EDSDetector, spectrum: BaseSpectrum, composition: Composition
     ):
-        """Automatically select intervals based on the specified composition and then fit a background to the specified
-        spectrum."""
+        """
+        Automatically select intervals based on the specified composition
+        and then fit a background to the specified spectrum.
+        """
         spectrum.apply_zero_peak_discriminator()
         dlm = detector.calibration.model
         e0 = ToSI.kev(self.e0_keV)
