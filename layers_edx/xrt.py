@@ -265,8 +265,10 @@ def transition_from_shells(source: int, destination: int) -> int | None:
 
 
 def destination_shell_from_transition(transition: int) -> int:
-    """Get the shell to which the electron jumps during the x-ray emission process. The destination shell is
-    typically a core electron."""
+    """
+    Get the shell to which the electron jumps during the x-ray emission process.
+    The destination shell is typically a core electron.
+    """
     return DESTINATION_SHELL[transition]
 
 
@@ -320,8 +322,11 @@ class TransitionEnergy:
 class XRayTransition:
     @classmethod
     def _source_shell(cls, element: Element, transition: int) -> int:
-        """Some transitions are not consistent with the standard naming schemes. For example, C Ka is K-L2 and not K-L3
-        because L3 doesn't exist in C and Ka refers to the brightest K line."""
+        """
+        Some transitions are not consistent with the standard naming schemes.
+        For example, C Ka is K-L2 and not K-L3 because L3 doesn't exist in C
+        and Ka refers to the brightest K line.
+        """
         result = SOURCE_SHELL[transition]
         atomic_number = element.atomic_number
         if atomic_number in [Element.from_name("Li"), Element.from_name("Be")]:
@@ -448,7 +453,10 @@ class XRayTransition:
 
     @classmethod
     def transition_with_lowest_energy(cls, element: Element, family: list[str]) -> int:
-        """Returns the transition index of the line in the specified `family` with the lowest x-ray energy."""
+        """
+        Returns the transition index of the line in the specified `family`
+        with the lowest x-ray energy.
+        """
         min_energy = float("inf")
         min_transition = -1
         for name in family:
@@ -465,7 +473,10 @@ class XRayTransition:
         source: int | None = None,
         destination: int | None = None,
     ):
-        """Create an object corresponding to a specific x-ray transition in a specific element."""
+        """
+        Create an object corresponding to a specific x-ray transition in a
+        specific element.
+        """
         if transition is not None:
             self._transition = (
                 transition_from_name(transition)
@@ -559,8 +570,11 @@ class XRayTransitionSet:
         min_weight: float = 0.0,
         populate: bool = True,
     ):
-        """Constructs an ``XRayTransitionSet`` consisting of all transitions for the specified `element` between the
-        `low_energy` and `high_energy` having a `min_weight`. Creates an empty `xrts` if `populate` is set to False."""
+        """
+        Constructs an `XRayTransitionSet` consisting of all transitions for the
+        specified `element` between the `low_energy` and `high_energy` having a
+        `min_weight`. Creates an empty `xrts` if `populate` is set to False.
+        """
         self._element = element
         self._xrts: set[XRayTransition] = set()
         if populate is False:
@@ -584,12 +598,12 @@ class XRayTransitionSet:
 
     @property
     def element(self) -> Element:
-        """The `element` represented by this ``XRayTransitionSet``."""
+        """The `element` represented by this `XRayTransitionSet`."""
         return self._element
 
     @property
     def xrts(self) -> set[XRayTransition]:
-        """The set of ``XRayTransition`` objects contained in this ``XRayTransitionSet``."""
+        """The set of `XRayTransition` objects contained in this `XRayTransitionSet`."""
         return self._xrts
 
     @property
@@ -607,7 +621,7 @@ class XRayTransitionSet:
         return result
 
     def contains(self, xrt: XRayTransition):
-        """Checks if the ``XRayTransitionSet`` contains the specified ``XRayTransition``."""
+        """Checks if the `XRayTransitionSet` contains the specified `XRayTransition`."""
         return xrt in self.xrts
 
     def add(self, xrt: XRayTransition):
@@ -628,7 +642,10 @@ class XRayTransitionSet:
 
     @staticmethod
     def all_xrts(element: Element, max_energy: float) -> XRayTransitionSet:
-        """Constructs the full set of ``XRayTransitions`` of edge energy less than `max_energy`."""
+        """
+        Constructs the full set of `XRayTransition`s
+        of edge energy less than `max_energy`.
+        """
         xrt_set = XRayTransitionSet(element, populate=False)
         for name in NAME:
             xrt = XRayTransition(element, name)
