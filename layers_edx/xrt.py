@@ -491,14 +491,14 @@ class XRayTransition:
                 "Either `transition` or `source` & `destination` must be provided!"
             )
 
-    def __eq__(self, other) -> bool:
-        if isinstance(other, XRayTransition):
-            return (
-                self.transition == other.transition
-                and self.source_shell == other.source_shell
-                and self.destination_shell == other.destination_shell
-            )
-        return False
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, XRayTransition):
+            return NotImplemented
+        return (
+            self.transition == other.transition
+            and self.source_shell == other.source_shell
+            and self.destination_shell == other.destination_shell
+        )
 
     def __hash__(self) -> int:
         return hash((self.transition, self.source_shell, self.destination_shell))
