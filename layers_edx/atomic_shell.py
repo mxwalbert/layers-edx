@@ -11,7 +11,8 @@ def read_edge_energies(filename: str, offset: int = 0) -> llf:
 
 class EdgeEnergy:
     class Database(Protocol):
-        def compute(self, shell: AtomicShell) -> float: ...
+        @classmethod
+        def compute(cls, shell: AtomicShell) -> float: ...
 
     class Chantler2005(Database):
         EDGE_ENERGY = read_edge_energies("FFastEdgeDB")
