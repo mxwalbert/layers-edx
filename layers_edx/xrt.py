@@ -574,10 +574,10 @@ class XRayTransitionSet:
             ):
                 self._xrts.add(xrt)
 
-    def __eq__(self, other) -> bool:
-        if isinstance(other, XRayTransitionSet):
-            return self.xrts == other.xrts
-        return False
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, XRayTransitionSet):
+            return NotImplemented
+        return self.xrts == other.xrts
 
     def __hash__(self) -> int:
         return sum([hash(xrt) for xrt in self.xrts])
