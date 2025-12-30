@@ -596,12 +596,14 @@ class XRayTransitionSet:
     def weightiest_transition(self) -> XRayTransition:
         """Returns the single weightiest transition."""
         max_weight = 0.0
-        result = None
+        result: XRayTransition | None = None
         for xrt in self.xrts:
             weight = xrt.weight("family")
             if weight > max_weight:
                 max_weight = weight
                 result = xrt
+        if result is None:
+            raise ValueError("Cannot get weightiest transition from empty set")
         return result
 
     def contains(self, xrt: XRayTransition):
