@@ -13,10 +13,10 @@ def get_physical_constant(name: str, unit: bool = False) -> float | Tuple[float,
 
 class PhysicalConstants:
 
-    ElementaryCharge = get_physical_constant('elementary charge')
-    AMU = get_physical_constant('unified atomic mass unit')
-    BohrRadius = get_physical_constant('Bohr radius')
-    ElectronRestMass = get_physical_constant('electron mass energy equivalent')
+    ElementaryCharge: float = get_physical_constant('elementary charge')
+    AMU: float = get_physical_constant('unified atomic mass unit')
+    BohrRadius: float = get_physical_constant('Bohr radius')
+    ElectronRestMass: float = get_physical_constant('electron mass energy equivalent')
 
 
 class ToSI:
