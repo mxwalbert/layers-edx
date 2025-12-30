@@ -1,9 +1,11 @@
 from __future__ import annotations
 import os
 import csv
-from typing import Callable, Type, Any
+from typing import TypeVar, Callable, Type, Any
 
 BASE_PATH = os.path.dirname(__file__)
+
+IntOrFloat = TypeVar("IntOrFloat", int, float)
 
 llf = list[list[float]]
 lli = list[list[int]]
@@ -15,10 +17,10 @@ def read_csv(
     row_offset: int = 0,
     column_offset: int = 0,
     nan: float | int | str = 0,
-    conversion: Callable = lambda x: x,
-    dtype: Type[float | int] = float,
+    conversion: Callable[[IntOrFloat], IntOrFloat] = lambda x: x,
+    dtype: Type[IntOrFloat] = float,
     fill_value: Any = None,
-) -> llf | lli:
+) -> list[list[IntOrFloat]]:
     fill_value = [] if fill_value is None else [fill_value]
     values = [fill_value for _ in range(value_offset)]
     with open(f"{BASE_PATH}/resources/{filename}.csv") as file:
