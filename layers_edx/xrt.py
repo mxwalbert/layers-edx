@@ -461,15 +461,15 @@ class XRayTransition:
     def __init__(
         self,
         element: Element,
-        transition: int | str = None,
-        source: int = None,
-        destination: int = None,
+        transition: int | str | None = None,
+        source: int | None = None,
+        destination: int | None = None,
     ):
         """Create an object corresponding to a specific x-ray transition in a specific element."""
         if transition is not None:
             self._transition = (
                 transition_from_name(transition)
-                if type(transition) == str
+                if isinstance(transition, str)
                 else transition
             )
             self._source = AtomicShell(
