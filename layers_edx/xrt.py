@@ -3,7 +3,10 @@ from layers_edx import read_csv, llf
 from layers_edx.atomic_shell import EdgeEnergy, AtomicShell
 from layers_edx.element import Element
 from layers_edx.units import ToSI
+from typing import Literal
 
+# Type alias for weight normalization parameter
+WeightNormalization = Literal["default", "family", "destination", "klm"]
 
 K_FAMILY = ["KA1", "KA2", "KB1", "KB2", "KB3", "KB4", "KB5"]
 L_FAMILY = [
@@ -394,8 +397,29 @@ class XRayTransition:
 
     @classmethod
     def get_weight(
-        cls, element: Element, transition: int, normalization: str = "default"
+        cls,
+        element: Element,
+        transition: int,
+        normalization: WeightNormalization = "default",
     ) -> float:
+        """Gets the transition weight associated with this transition.
+
+        Args:
+            element: The element for this transition.
+            transition: The transition index.
+            normalization: How to normalize the weight. Options:
+                - 'default': Raw weight from LINE_WEIGHT table
+                - 'family': Normalized by sum of all transitions in the family
+                - 'destination': Normalized by sum of all transitions to the
+                  destination shell
+                - 'klm': Normalized by the maximum weight in the family
+
+        Returns:
+            The (normalized) transition weight.
+
+        Raises:
+            ValueError: If normalization is not a valid option.
+        """
         z = element.atomic_number
         if transition >= len(LINE_WEIGHT[z]):
             return 0.0
@@ -415,6 +439,11 @@ class XRayTransition:
             return (
                 LINE_WEIGHT[z][transition]
                 / KLM_NORM[z][family_from_transition(transition)]
+            )
+        else:
+            raise ValueError(
+                f"Invalid normalization '{normalization}'. "
+                f"Must be one of: 'default', 'family', 'destination', 'klm'"
             )
 
     @classmethod
@@ -514,7 +543,10 @@ class XRayTransition:
     def exists(self) -> bool:
         return self.source.exists and self.destination.exists and self.weight() > 0.0
 
-    def weight(self, normalization: str = "default") -> float:
+    def weight(
+        self,
+        normalization: WeightNormalization = "default",
+    ) -> float:
         return self.get_weight(self.element, self.transition, normalization)
 
 
