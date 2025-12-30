@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Protocol
+from typing import Protocol, Type
 from layers_edx import lli, llf, read_csv
 from layers_edx.element import Element
 from layers_edx.units import ToSI
@@ -78,7 +78,13 @@ class EdgeEnergy:
 
     @classmethod
     def compute(cls, shell: AtomicShell) -> float:
-        for database in [cls.Chantler2005, cls.Williams2011, cls.NIST, cls.DTSA]:
+        databases: list[Type[EdgeEnergy.Database]] = [
+            cls.Chantler2005,
+            cls.Williams2011,
+            cls.NIST,
+            cls.DTSA,
+        ]
+        for database in databases:
             value = database.compute(shell)
             if value > 0.0:
                 return value
