@@ -18,7 +18,7 @@ class SpectrumSimulator(ABC):
         self,
         composition: Composition,
         properties: SpectrumProperties,
-        shells: set[AtomicShell] = None,
+        shells: set[AtomicShell] | None = None,
     ):
         self._composition = composition
         self._properties = properties
@@ -59,7 +59,7 @@ class SpectrumSimulator(ABC):
     def measured_intensities(self) -> dict[XRayTransition, float]:
         detector: EDSDetector = self.properties.detector
         scale = 1.0 / (4.0 * math.pi * self.properties.sample_distance**2)
-        result = {}
+        result: dict[XRayTransition, float] = {}
         for xrt, intensity in self.emitted_intensities.items():
             channel = int(
                 (FromSI.ev(xrt.energy) - detector.calibration.zero_offset)
@@ -75,7 +75,7 @@ class BasicSimulator(SpectrumSimulator):
         self,
         composition: Composition,
         properties: SpectrumProperties,
-        shells: set[AtomicShell] = None,
+        shells: set[AtomicShell] | None = None,
         ca: Type[Correction] = XPP,
         tp: Type[TransitionProbabilities] = TransitionProbabilities,
         aics: Type[AbsoluteIonizationCrossSection] = AbsoluteIonizationCrossSection,
@@ -87,7 +87,7 @@ class BasicSimulator(SpectrumSimulator):
 
     @property
     def emitted_intensities(self) -> dict[XRayTransition, float]:
-        result = {}
+        result: dict[XRayTransition, float] = {}
         e0 = ToSI.kev(self.properties.beam_energy)
         dose = self.properties.dose * 1e-9 / PhysicalConstants.ElementaryCharge
         for shell in self.shells:
