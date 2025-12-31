@@ -14,7 +14,10 @@ from layers_edx.xrt import XRayTransition
 
 
 class PAP(PhiRhoZ):
-    """Implements the PAP algorithm as described in Pouchou & Pichoir in Electron Probe Quantitation."""
+    """
+    Implements the PAP algorithm as described in Pouchou & Pichoir
+    in Electron Probe Quantitation.
+    """
 
     mac = MassAbsorptionCoefficient
     bf = BackscatterFactor
@@ -23,10 +26,19 @@ class PAP(PhiRhoZ):
     pics = ProportionalIonizationCrossSection
     er = ElectronRange
 
-    def __init__(self, composition: Composition, shell: AtomicShell, properties: SpectrumProperties):
+    def __init__(
+        self,
+        composition: Composition,
+        shell: AtomicShell,
+        properties: SpectrumProperties,
+    ):
         super().__init__(composition, shell, properties)
 
-        f = (self.bf.compute(composition, shell, self.beam_energy) * FromSI.gpcm2kev(self.sp.compute_inv(composition, shell, self.beam_energy)) / self.pics.compute_family(shell, self.beam_energy))
+        f = (
+            self.bf.compute(composition, shell, self.beam_energy)
+            * FromSI.gpcm2kev(self.sp.compute_inv(composition, shell, self.beam_energy))
+            / self.pics.compute_family(shell, self.beam_energy)
+        )
         self.f = f
 
         phi0 = self.si.compute(composition, shell, self.beam_energy)
@@ -37,7 +49,11 @@ class PAP(PhiRhoZ):
         z_bar = composition.mean_atomic_number
         z_bar_n = self.log_mean_atomic_number
         beta = 40.0 / z_bar
-        q0 = 1.0 - (0.535 * math.exp(-math.pow(21.0 / z_bar_n, 1.2))) - (2.5e-4 * math.pow(z_bar_n / 20.0, 3.5))
+        q0 = (
+            1.0
+            - (0.535 * math.exp(-math.pow(21.0 / z_bar_n, 1.2)))
+            - (2.5e-4 * math.pow(z_bar_n / 20.0, 3.5))
+        )
         q = q0 + ((1.0 - q0) * math.exp((1.0 - u0) / beta))
         d = 1.0 + (1.0 / math.pow(u0, math.pow(z_bar, 0.45)))
 
@@ -67,17 +83,47 @@ class PAP(PhiRhoZ):
 
     @property
     def mean_atomic_number(self) -> float:
-        return sum([f * math.sqrt(e.atomic_number) for e, f in self.composition.weight_fractions.items()]) ** 2
+        return (
+            sum(
+                [
+                    f * math.sqrt(e.atomic_number)
+                    for e, f in self.composition.weight_fractions.items()
+                ]
+            )
+            ** 2
+        )
 
     @property
     def log_mean_atomic_number(self) -> float:
-        return math.exp(sum([f * math.log(e.atomic_number) for e, f in self.composition.weight_fractions.items()]))
+        return math.exp(
+            sum(
+                [
+                    f * math.log(e.atomic_number)
+                    for e, f in self.composition.weight_fractions.items()
+                ]
+            )
+        )
 
     def compute_za_correction(self, xrt: XRayTransition) -> float:
         chi = FromSI.cm2pg(self.chi(xrt))
         chi2 = chi * chi
-        f1 = (self.a1 / chi) * (((((self.rc - self.rm) * (self.rx - self.rc - (2.0 / chi))) - (2.0 / chi2)) * math.exp(-chi * self.rc)) - ((self.rc - self.rm) * self.rx) + (self.rm * (self.rc - (2.0 / chi))) + (2.0 / chi2))
-        f2 = (self.a2 / chi) * (((self.rx - self.rc) * (self.rx - self.rc - (2.0 / chi))) + (2.0 / chi2)) * math.exp(-chi * self.rx)
+        f1 = (self.a1 / chi) * (
+            (
+                (
+                    ((self.rc - self.rm) * (self.rx - self.rc - (2.0 / chi)))
+                    - (2.0 / chi2)
+                )
+                * math.exp(-chi * self.rc)
+            )
+            - ((self.rc - self.rm) * self.rx)
+            + (self.rm * (self.rc - (2.0 / chi)))
+            + (2.0 / chi2)
+        )
+        f2 = (
+            (self.a2 / chi)
+            * (((self.rx - self.rc) * (self.rx - self.rc - (2.0 / chi))) + (2.0 / chi2))
+            * math.exp(-chi * self.rx)
+        )
         return ToSI.gpcm2(f1 + f2)
 
     def compute_curve(self, rho_z: float) -> float:
