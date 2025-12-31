@@ -9,14 +9,14 @@ class RegionOfInterest:
     def __init__(
         self,
         xrt: XRayTransition,
-        model: LineshapeModel = None,
+        model: LineshapeModel | None = None,
         min_intensity: float = 0.0,
         low_extra: float = 0.0,
         high_extra: float = 0.0,
     ):
         self._low_energy = float("inf")
         self._high_energy = -float("inf")
-        self._xrts = set()
+        self._xrts: set[XRayTransition] = set()
         self._model = model
         self._min_intensity = min_intensity
         self._low_extra = low_extra
