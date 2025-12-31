@@ -168,7 +168,7 @@ class RegionOfInterestSet:
         return self._rois
 
     @property
-    def model(self) -> LineshapeModel:
+    def model(self) -> LineshapeModel | None:
         """The detector ``LineShapeModel``."""
         return self._model
 
@@ -198,7 +198,7 @@ class RegionOfInterestSet:
         Returns a set of the `XRayTransition` objects contained in
         this `RegionOfInterestSet`.
         """
-        result = set()
+        result: set[XRayTransition] = set()
         for roi in self.rois:
             result.update(roi.xrts)
         return result
@@ -209,7 +209,7 @@ class RegionOfInterestSet:
         Returns a set of the `Element` objects represented by
         this `RegionOfInterestSet`.
         """
-        result = set()
+        result: set[Element] = set()
         for roi in self.rois:
             result.update(roi.elements)
         return result
@@ -238,7 +238,7 @@ class RegionOfInterestSet:
         Adds a new `RegionOfInterest` to the `RegionOfInterestSet`.
         If the `RegionOfInterest` overlaps with an existing one, they will be merged.
         """
-        matches = set()
+        matches: set[RegionOfInterest] = set()
         for roi in self.rois:
             if roi.intersects(new_roi):
                 matches.add(roi)
@@ -260,7 +260,7 @@ class RegionOfInterestSet:
             ):
                 self.add_xrt(xrt)
 
-    def intersects(self, other: RegionOfInterest or RegionOfInterestSet):
+    def intersects(self, other: RegionOfInterest | RegionOfInterestSet):
         """
         Tests whether any of the `other` `RegionOfInterest` items overlap with
         any of the `self.rois`.
