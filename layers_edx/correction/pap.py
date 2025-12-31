@@ -4,7 +4,6 @@ from layers_edx.atomic_shell import AtomicShell
 from layers_edx.element import Composition
 from layers_edx.material_properties.bf import BackscatterFactor
 from layers_edx.material_properties.ics import ProportionalIonizationCrossSection
-from layers_edx.material_properties.mac import MassAbsorptionCoefficient
 from layers_edx.material_properties.si import SurfaceIonization
 from layers_edx.material_properties.sp import StoppingPower
 from layers_edx.material_properties.er import ElectronRange
@@ -19,7 +18,6 @@ class PAP(PhiRhoZ):
     in Electron Probe Quantitation.
     """
 
-    mac = MassAbsorptionCoefficient
     bf = BackscatterFactor
     si = SurfaceIonization
     sp = StoppingPower
