@@ -103,7 +103,7 @@ class GridMountedWindow(XRayWindow):
         grid_material: Material,
         grid_thickness: float,
         open_fraction: float = 1.0,
-        layers: list[XRayWindowLayer] = None,
+        layers: list[XRayWindowLayer] | None = None,
     ):
         super().__init__(open_fraction, layers)
         self._grid = XRayWindowLayer(grid_material, grid_thickness)
@@ -202,7 +202,9 @@ class DetectorCalibration(ABC):
         return self._zero_offset
 
     @abstractmethod
-    def get_efficiency(self, properties: DetectorProperties) -> npt.NDArray[float]:
+    def get_efficiency(
+        self, properties: DetectorProperties
+    ) -> npt.NDArray[np.floating]:
         """Computes the detector efficiency given the detector's properties."""
 
     @abstractmethod
@@ -224,7 +226,7 @@ class EDSCalibration(DetectorCalibration):
         fwhm_at_mn_ka: float = 1.0,
         fano: float = 1.0,
         noise: float = 1.0,
-        model: LineshapeModel = None,
+        model: LineshapeModel | None = None,
     ):
         super().__init__(channel_width, zero_offset)
         self._fudge_factor = 1.0
@@ -242,28 +244,32 @@ class EDSCalibration(DetectorCalibration):
         """The lineshape model of this calibration."""
         return self._model
 
-    def get_efficiency(self, dp: DetectorProperties) -> npt.NDArray[float]:
-        """Computes the detector efficiency given the detector properties `dp`."""
+    def get_efficiency(
+        self, properties: DetectorProperties
+    ) -> npt.NDArray[np.floating]:
+        """
+        Computes the detector efficiency given the detector properties `properties`.
+        """
 
         mac = MassAbsorptionCoefficient.compute
 
         si, au, al, ni = [Element(element) for element in ["Si", "Au", "Al", "Ni"]]
-        active_mt = ToSI.gpcm3(Material(si).density) * ToSI.mm(dp.thickness)
-        dead_mt = ToSI.gpcm3(Material(si).density) * ToSI.um(dp.dead_layer)
-        au_mt = ToSI.gpcm3(Material(au).density) * ToSI.nm(dp.gold_layer)
-        al_mt = ToSI.gpcm3(Material(al).density) * ToSI.nm(dp.aluminium_layer)
-        ni_mt = ToSI.gpcm3(Material(ni).density) * ToSI.nm(dp.nickel_layer)
+        active_mt = ToSI.gpcm3(Material(si).density) * ToSI.mm(properties.thickness)
+        dead_mt = ToSI.gpcm3(Material(si).density) * ToSI.um(properties.dead_layer)
+        au_mt = ToSI.gpcm3(Material(au).density) * ToSI.nm(properties.gold_layer)
+        al_mt = ToSI.gpcm3(Material(al).density) * ToSI.nm(properties.aluminium_layer)
+        ni_mt = ToSI.gpcm3(Material(ni).density) * ToSI.nm(properties.nickel_layer)
 
         data = np.array(
             [
                 ToSI.ev(self.channel_width * (i + 0.5) + self.zero_offset)
-                for i in range(dp.channel_count)
+                for i in range(properties.channel_count)
             ]
         )
 
-        def func(e):
+        def func(e: float) -> float:
             result = 1.0
-            result *= dp.window.transmission(e)
+            result *= properties.window.transmission(e)
             result *= 1 - math.exp(-mac(si, e) * active_mt)
             result *= math.exp(-mac(si, e) * dead_mt)
             result *= math.exp(-mac(au, e) * au_mt)
@@ -271,7 +277,11 @@ class EDSCalibration(DetectorCalibration):
             result *= math.exp(-mac(ni, e) * ni_mt)
             return result
 
-        return np.vectorize(func)(data) * ToSI.mm2(dp.area) * (1.0 / (4.0 * math.pi))
+        return (
+            np.vectorize(func)(data)
+            * ToSI.mm2(properties.area)
+            * (1.0 / (4.0 * math.pi))
+        )
 
     def is_visible(self, xrt: XRayTransition, energy: float) -> bool:
         """Checks if the specified `xrt` is visible at this beam `energy`."""
@@ -288,7 +298,7 @@ class Detector(ABC):
         self,
         properties: DetectorProperties,
         position: DetectorPosition,
-        calibration: TDetectorCalibration,
+        calibration: DetectorCalibration,
     ):
         self._properties = properties
         self._position = position
@@ -305,7 +315,7 @@ class Detector(ABC):
         return self._position
 
     @property
-    def calibration(self) -> TDetectorCalibration:
+    def calibration(self) -> DetectorCalibration:
         """The detector's ``DetectorCalibration`` object."""
         return self._calibration
 
