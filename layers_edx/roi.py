@@ -151,12 +151,12 @@ class RegionOfInterest:
 class RegionOfInterestSet:
     def __init__(
         self,
-        model: LineshapeModel = None,
+        model: LineshapeModel | None = None,
         min_intensity: float = 0.0,
         low_extra: float = 0.0,
         high_extra: float = 0.0,
     ):
-        self._rois = set()
+        self._rois: set[RegionOfInterest] = set()
         self._model = model
         self._min_intensity = min_intensity
         self._low_extra = low_extra
