@@ -47,7 +47,7 @@ class Layer:
         self.fixed_composition = fixed_composition
         self.fixed_thickness = fixed_thickness
         self.algorithm_class = algorithm_class
-        self._algorithms: dict[AtomicShell, algorithm_class] = {}
+        self._algorithms: dict[AtomicShell, PhiRhoZ] = {}
         self._intensities = None
 
     @property
