@@ -26,7 +26,9 @@ class RegionOfInterest:
     def __lt__(self, other: RegionOfInterest) -> bool:
         return self.low_energy < other.low_energy
 
-    def __eq__(self, other: RegionOfInterest) -> bool:
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, RegionOfInterest):
+            return NotImplemented
         return (
             self.low_energy == other.low_energy
             and self.high_energy == other.high_energy
