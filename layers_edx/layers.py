@@ -12,9 +12,9 @@ from layers_edx.xrt import XRayTransition
 
 
 def corrected_intensities(
-    layers: list[Layer], xrts: set[XRayTransition] = None
+    layers: list[Layer], xrts: set[XRayTransition] | None = None
 ) -> dict[XRayTransition, float]:
-    intensities = {}
+    intensities: dict[XRayTransition, float] = {}
     for layer in layers:
         for xrt, ideal_intensity in layer.ideal_intensities.items():
             if xrts is not None and xrt not in xrts:
