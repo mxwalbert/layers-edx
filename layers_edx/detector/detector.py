@@ -21,6 +21,7 @@ class XRayWindowLayer:
         material (Material): The material of the layer.
         thickness (float): The thickness of the layer in nanometers (nm).
     """
+
     material: Material
     thickness: float
 
@@ -32,9 +33,12 @@ class XRayWindowLayer:
             energy (float): The energy of the x-ray beam in joules (J).
 
         Returns:
-            float: The mass absorption coefficient of the layer at the given energy in square metre per kilogram (m²/kg).
+            float: The mass absorption coefficient of the layer at the given energy in
+            square metre per kilogram (m²/kg).
         """
-        result = MassAbsorptionCoefficient.compute_composition(self.material.composition, energy)
+        result = MassAbsorptionCoefficient.compute_composition(
+            self.material.composition, energy
+        )
         return result * ToSI.gpcm3(self.material.density) * ToSI.nm(self.thickness)
 
 
@@ -44,8 +48,10 @@ class XRayWindow:
     Represents the window of an x-ray detector.
 
     Attributes:
-    - open_fraction (float): The fraction of the window that is not blocked. Default is 1.0.
-    - layers (list[XRayWindowLayer]): The layers of materials which are stacked to form the x-ray window. Defaults to an empty list.
+    - open_fraction (float): The fraction of the window that is not blocked.
+    Default is 1.0.
+    - layers (list[XRayWindowLayer]): The layers of materials which are stacked
+    to form the x-ray window. Defaults to an empty list.
     """
 
     open_fraction: float = 1.0
@@ -53,19 +59,22 @@ class XRayWindow:
 
     def mac(self, energy: float) -> float:
         """
-        Calculates the mass absorption coefficient of the x-ray window at the specified energy.
+        Calculates the mass absorption coefficient of the x-ray window at the
+        specified energy.
 
         Args:
             energy (float): The energy of the x-ray beam in joules (J).
 
         Returns:
-            float: The mass absorption coefficient of the window at the given energy in square metre per kilogram (m²/kg).
+            float: The mass absorption coefficient of the window at the given energy
+            in square metre per kilogram (m²/kg).
         """
         return sum([layer.mac(energy) for layer in self.layers])
 
     def transmission(self, energy: float) -> float:
         """
-        Computes the fraction of the incident beam which is transmitted through the window.
+        Computes the fraction of the incident beam which is transmitted
+        through the window.
 
         Args:
             energy (float): The energy of the x-ray beam in joules (J).
@@ -89,9 +98,13 @@ class XRayWindow:
 
 
 class GridMountedWindow(XRayWindow):
-
-    def __init__(self, grid_material: Material, grid_thickness: float,
-                 open_fraction: float = 1.0, layers: list[XRayWindowLayer] = None):
+    def __init__(
+        self,
+        grid_material: Material,
+        grid_thickness: float,
+        open_fraction: float = 1.0,
+        layers: list[XRayWindowLayer] = None,
+    ):
         super().__init__(open_fraction, layers)
         self._grid = XRayWindowLayer(grid_material, grid_thickness)
 
@@ -101,7 +114,9 @@ class GridMountedWindow(XRayWindow):
         return self._grid
 
     def transmission(self, energy: float) -> float:
-        grid_transmission = self.open_fraction + (1.0 - self.open_fraction) * math.exp(-self.grid.mac(energy))
+        grid_transmission = self.open_fraction + (1.0 - self.open_fraction) * math.exp(
+            -self.grid.mac(energy)
+        )
         return super().transmission(energy) / self.open_fraction * grid_transmission
 
 
@@ -114,11 +129,16 @@ class DetectorProperties:
     - channel_count (int): The number of channels for binning the detected x-ray beams.
     - area (float): The active surface area of the detector (mm²).
     - thickness (float): The thickness of the active detector volume (mm).
-    - dead_layer (float): The thickness of the non-active silicone layer coating the surface of the detector (µm). Default is 0.0.
-    - gold_layer (float): The thickness of the gold layer coating the surface of the detector (nm). Default is 0.0.
-    - aluminium_layer (float): The thickness of the aluminium layer coating the surface of the detector (nm). Default is 0.0.
-    - nickel_layer (float): The thickness of the nickel layer coating the surface of the detector (nm). Default is 0.0.
-    - window (XRayWindow): The `XRayWindow` which covers the detector. Defaults to a transparent window.
+    - dead_layer (float): The thickness of the non-active silicone layer coating the
+    surface of the detector (µm). Default is 0.0.
+    - gold_layer (float): The thickness of the gold layer coating the surface of the
+    detector (nm). Default is 0.0.
+    - aluminium_layer (float): The thickness of the aluminium layer coating the surface
+    of the detector (nm). Default is 0.0.
+    - nickel_layer (float): The thickness of the nickel layer coating the surface of the
+    detector (nm). Default is 0.0.
+    - window (XRayWindow): The `XRayWindow` which covers the detector. Defaults to
+    a transparent window.
     """
 
     channel_count: int = 1000
@@ -139,8 +159,10 @@ class DetectorPosition:
     Attributes:
     - elevation (float): The elevation angle of the detector (deg). Default is 40.0.
     - azimuth (float): The azimuth angle of the detector (deg). Default is 0.0.
-    - sample_distance (float): The distance from the detector to the sample at the optimal working distance (mm). Default is 60.0.
-    - optimal_working_distance (float): The optimal working distance of the detector (mm). Default is 20.0.
+    - sample_distance (float): The distance from the detector to the sample at the
+    optimal working distance (mm). Default is 60.0.
+    - optimal_working_distance (float): The optimal working distance of
+    the detector (mm). Default is 20.0.
     """
 
     elevation: float = 40.0
@@ -152,15 +174,19 @@ class DetectorPosition:
     def orientation(self) -> npt.NDArray[np.floating]:
         el = np.deg2rad(self.elevation)
         az = np.deg2rad(self.azimuth)
-        return np.array([- np.cos(el) * np.cos(az), - np.cos(el) * np.sin(az), np.sin(el)])
+        return np.array(
+            [-np.cos(el) * np.cos(az), -np.cos(el) * np.sin(az), np.sin(el)]
+        )
 
     @cached_property
     def coordinates(self) -> npt.NDArray[np.floating]:
-        return np.array([0, 0, self.optimal_working_distance]) - self.sample_distance * self.orientation
+        return (
+            np.array([0, 0, self.optimal_working_distance])
+            - self.sample_distance * self.orientation
+        )
 
 
 class DetectorCalibration(ABC):
-
     def __init__(self, channel_width: float = 1.0, zero_offset: float = 0.0):
         self._channel_width = channel_width
         self._zero_offset = zero_offset
@@ -184,22 +210,27 @@ class DetectorCalibration(ABC):
         """Checks if the provided `xrt` is visible at the specified beam `energy."""
 
 
-TDetectorCalibration = TypeVar('TDetectorCalibration', bound=DetectorCalibration)
+TDetectorCalibration = TypeVar("TDetectorCalibration", bound=DetectorCalibration)
 
 
 class EDSCalibration(DetectorCalibration):
-
     MIN_OVERVOLTAGE = 1.1
-    FIRST_ELEMENT = [Element('Ca'), Element('B'), Element('La'), Element('Am')]
+    FIRST_ELEMENT = [Element("Ca"), Element("B"), Element("La"), Element("Am")]
 
-    def __init__(self,
-                 channel_width: float = 1.0, zero_offset: float = 0.0,
-                 fwhm_at_mn_ka: float = 1.0, fano: float = 1.0, noise: float = 1.0,
-                 model: LineshapeModel = None
-                 ):
+    def __init__(
+        self,
+        channel_width: float = 1.0,
+        zero_offset: float = 0.0,
+        fwhm_at_mn_ka: float = 1.0,
+        fano: float = 1.0,
+        noise: float = 1.0,
+        model: LineshapeModel = None,
+    ):
         super().__init__(channel_width, zero_offset)
         self._fudge_factor = 1.0
-        self._model = FanoSiLiLineshape(fwhm_at_mn_ka, fano, noise) if model is None else model
+        self._model = (
+            FanoSiLiLineshape(fwhm_at_mn_ka, fano, noise) if model is None else model
+        )
 
     @property
     def fudge_factor(self) -> float:
@@ -216,14 +247,19 @@ class EDSCalibration(DetectorCalibration):
 
         mac = MassAbsorptionCoefficient.compute
 
-        si, au, al, ni = [Element(element) for element in ['Si', 'Au', 'Al', 'Ni']]
+        si, au, al, ni = [Element(element) for element in ["Si", "Au", "Al", "Ni"]]
         active_mt = ToSI.gpcm3(Material(si).density) * ToSI.mm(dp.thickness)
         dead_mt = ToSI.gpcm3(Material(si).density) * ToSI.um(dp.dead_layer)
         au_mt = ToSI.gpcm3(Material(au).density) * ToSI.nm(dp.gold_layer)
         al_mt = ToSI.gpcm3(Material(al).density) * ToSI.nm(dp.aluminium_layer)
         ni_mt = ToSI.gpcm3(Material(ni).density) * ToSI.nm(dp.nickel_layer)
 
-        data = np.array([ToSI.ev(self.channel_width * (i + 0.5) + self.zero_offset) for i in range(dp.channel_count)])
+        data = np.array(
+            [
+                ToSI.ev(self.channel_width * (i + 0.5) + self.zero_offset)
+                for i in range(dp.channel_count)
+            ]
+        )
 
         def func(e):
             result = 1.0
@@ -248,8 +284,12 @@ class EDSCalibration(DetectorCalibration):
 
 
 class Detector(ABC):
-
-    def __init__(self, properties: DetectorProperties, position: DetectorPosition, calibration: TDetectorCalibration):
+    def __init__(
+        self,
+        properties: DetectorProperties,
+        position: DetectorPosition,
+        calibration: TDetectorCalibration,
+    ):
         self._properties = properties
         self._position = position
         self._calibration = calibration
@@ -275,8 +315,12 @@ class Detector(ABC):
 
     @abstractmethod
     def add_event(self, energy: float, intensity: float):
-        """Add an x-ray of the specified energy and intensity (1.0 for a full, single x-ray) to the internal data
-        object. The intensity is scaled to account for distance from the point of generation to the detector."""
+        """
+        Add an x-ray of the specified energy and intensity
+        (1.0 for a full, single x-ray) to the internal data
+        object. The intensity is scaled to account for distance from the point of
+        generation to the detector.
+        """
 
 
-TDetector = TypeVar('TDetector', bound=Detector)
+TDetector = TypeVar("TDetector", bound=Detector)
