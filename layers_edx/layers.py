@@ -93,7 +93,7 @@ class Layer:
     def upper_layer_absorption(self, xrt: XRayTransition, layers: list[Layer]) -> float:
         """Calculates the absorption of the layer's radiation by the layers above it."""
         result = 1.0
-        for i, layer in enumerate(layers[1 : layers.index(self)]):
+        for layer in layers[1 : layers.index(self)]:
             delta_chi = self.algorithm(xrt.destination).chi(xrt) - layer.algorithm(
                 xrt.destination
             ).chi(xrt)
