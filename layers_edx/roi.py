@@ -60,7 +60,7 @@ class RegionOfInterest:
         return self._xrts
 
     @property
-    def model(self) -> LineshapeModel:
+    def model(self) -> LineshapeModel | None:
         """The detector ``LineShapeModel``."""
         return self._model
 
