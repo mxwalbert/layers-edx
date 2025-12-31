@@ -81,7 +81,10 @@ class LineshapeModel(ABC):
 
 class FanoSiLiLineshape(LineshapeModel):
     def __init__(
-        self, fwhm_at_mn_ka: float = None, fano: float = None, noise: float = None
+        self,
+        fwhm_at_mn_ka: float | None = None,
+        fano: float | None = None,
+        noise: float | None = None,
     ):
         if fwhm_at_mn_ka is not None:
             self.fano = 0.122
