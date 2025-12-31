@@ -90,7 +90,7 @@ class RegionOfInterest:
         Returns a sorted list of unique `Element` objects represented
         by this `RegionOfInterest`.
         """
-        elements = set()
+        elements: set[Element] = set()
         for xrt in self.xrts:
             elements.add(xrt.element)
         return sorted(elements)
