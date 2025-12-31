@@ -1,6 +1,11 @@
 import numpy as np
 from numpy import typing as npt
-from layers_edx.detector.detector import Detector, DetectorProperties, DetectorPosition, EDSCalibration
+from layers_edx.detector.detector import (
+    Detector,
+    DetectorProperties,
+    DetectorPosition,
+    EDSCalibration,
+)
 from layers_edx.element import Element
 from layers_edx.spectrum.base_spectrum import BaseSpectrum
 from layers_edx.units import FromSI
@@ -8,8 +13,12 @@ from layers_edx.xrt import XRayTransition, XRayTransitionSet
 
 
 class EDSDetector(Detector):
-
-    def __init__(self, properties: DetectorProperties, position: DetectorPosition, calibration: EDSCalibration):
+    def __init__(
+        self,
+        properties: DetectorProperties,
+        position: DetectorPosition,
+        calibration: EDSCalibration,
+    ):
         super().__init__(properties, position, calibration)
         self._dirty = True
         self._accumulator = None
@@ -57,18 +66,29 @@ class EDSDetector(Detector):
             self.dirty = True
 
     def convolve(self, min_i=1e-4):
-        """Takes the events in the `accumulator` and convolves them into the existing `spectrum`. Should be called
-        after new events are recorded by the detector."""
+        """
+        Takes the events in the `accumulator` and convolves them into the existing
+        `spectrum`. Should be called after new events are recorded by the detector.
+        """
         dlm = self.calibration.model
         spec = self.spectrum
         ch_width = self.calibration.channel_width
-        fs = ch_width * self.calibration.fudge_factor * self.efficiency * self.accumulator
+        fs = (
+            ch_width
+            * self.calibration.fudge_factor
+            * self.efficiency
+            * self.accumulator
+        )
         spec.data.fill(0.0)
         for i in range(fs.shape[0]):
             if fs[i] > 0.0:
                 e = spec.min_energy_from_channel(i)
-                high_bin = spec.bound(spec.channel_from_energy(e + dlm.right_width(e, min_i)))
-                low_bin = spec.bound(spec.channel_from_energy(e - dlm.left_width(e, min_i)))
+                high_bin = spec.bound(
+                    spec.channel_from_energy(e + dlm.right_width(e, min_i))
+                )
+                low_bin = spec.bound(
+                    spec.channel_from_energy(e - dlm.left_width(e, min_i))
+                )
                 ee = spec.min_energy_from_channel(low_bin)
                 prev = dlm.compute(ee, e)
                 for ch in range(low_bin, high_bin):
@@ -89,8 +109,10 @@ class EDSDetector(Detector):
         return self.calibration.is_visible(xrt, energy)
 
     def visible_xrts(self, element: Element, max_energy: float) -> XRayTransitionSet:
-        """Constructs the full set of ``XRayTransitions`` of edge energy less than `max_energy` which can reasonably be
-        expected to be visible with this detector."""
+        """
+        Constructs the full set of `XRayTransitions` of edge energy less than
+        `max_energy` which can reasonably be expected to be visible with this detector.
+        """
         xrt_set = XRayTransitionSet.all_xrts(element, max_energy)
         for xrt in xrt_set.xrts.copy():
             if not self.is_visible(xrt, max_energy):
