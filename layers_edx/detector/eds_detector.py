@@ -10,6 +10,7 @@ from layers_edx.element import Element
 from layers_edx.spectrum.base_spectrum import BaseSpectrum
 from layers_edx.units import FromSI
 from layers_edx.xrt import XRayTransition, XRayTransitionSet
+from typing import cast
 
 
 class EDSDetector(Detector):
@@ -27,7 +28,7 @@ class EDSDetector(Detector):
 
     @property
     def calibration(self) -> EDSCalibration:
-        return self._calibration
+        return cast(EDSCalibration, self._calibration)
 
     @property
     def dirty(self) -> bool:
@@ -39,7 +40,7 @@ class EDSDetector(Detector):
         self._dirty = value
 
     @property
-    def accumulator(self) -> npt.NDArray[int]:
+    def accumulator(self) -> npt.NDArray[np.floating]:
         if self._accumulator is None:
             self._accumulator = np.zeros(self.properties.channel_count)
         return self._accumulator
@@ -50,7 +51,7 @@ class EDSDetector(Detector):
         return self._spectrum
 
     @property
-    def efficiency(self) -> npt.NDArray[float]:
+    def efficiency(self) -> npt.NDArray[np.floating]:
         """Returns the detector efficiency from the calibration."""
         return self._efficiency
 
@@ -65,7 +66,7 @@ class EDSDetector(Detector):
             self.accumulator[channel] += intensity
             self.dirty = True
 
-    def convolve(self, min_i=1e-4):
+    def convolve(self, min_i: float = 1e-4):
         """
         Takes the events in the `accumulator` and convolves them into the existing
         `spectrum`. Should be called after new events are recorded by the detector.
