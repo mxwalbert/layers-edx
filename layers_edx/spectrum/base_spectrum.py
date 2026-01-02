@@ -81,7 +81,7 @@ class BaseSpectrum:
     @property
     def zero_offset(self) -> float:
         """Returns the energy of the first channel."""
-        raise self.properties.zero_offset
+        return self.properties.zero_offset
 
     @property
     def zero_peak_discriminator_channel(self):
