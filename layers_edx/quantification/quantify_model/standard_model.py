@@ -5,14 +5,15 @@ from layers_edx.xrt import XRayTransition, XRayTransitionSet
 
 
 class StandardModel(StandardMaterial):
-
-    def __init__(self,
-                 model: dict[XRayTransition, float],
-                 beam_energy: float,
-                 element: Element,
-                 composition: Composition,
-                 stripped_elements: set[Element] = None,
-                 min_intensity: float = 1.0e-3):
+    def __init__(
+        self,
+        model: dict[XRayTransition, float],
+        beam_energy: float,
+        element: Element,
+        composition: Composition,
+        stripped_elements: set[Element] = None,
+        min_intensity: float = 1.0e-3,
+    ):
         self._model = model
         self._beam_energy = beam_energy
         super().__init__(element, composition, stripped_elements, min_intensity)
@@ -22,8 +23,10 @@ class StandardModel(StandardMaterial):
         return self._model
 
     def create_element_roi_set(self, element: Element) -> RegionOfInterestSet:
-        """Create the ROIs associated with the specified element. Finds the X-ray transitions which are limited by
-        the minimum intensity."""
+        """
+        Create the ROIs associated with the specified element. Finds the
+        X-ray transitions which are limited by the minimum intensity.
+        """
         roi_set = RegionOfInterestSet(min_intensity=self.min_intensity)
         for xrt in XRayTransitionSet.all_xrts(element, self._beam_energy).xrts:
             roi_set.add_xrt(xrt)
