@@ -1,9 +1,12 @@
-import pytest
+from layers_edx.element import Composition
 from layers_edx.simulation import BasicSimulator
+from layers_edx.spectrum.spectrum_properties import SpectrumProperties
 from layers_edx.xrt import XRayTransition
 
 
-def test_basic_simulator_emitted(mock_composition, mock_spectrum_properties):
+def test_basic_simulator_emitted(
+    mock_composition: Composition, mock_spectrum_properties: SpectrumProperties
+):
     sim = BasicSimulator(mock_composition, mock_spectrum_properties)
     intensities = sim.emitted_intensities
 
@@ -26,7 +29,9 @@ def test_basic_simulator_emitted(mock_composition, mock_spectrum_properties):
     assert found
 
 
-def test_basic_simulator_measured(mock_composition, mock_spectrum_properties):
+def test_basic_simulator_measured(
+    mock_composition: Composition, mock_spectrum_properties: SpectrumProperties
+):
     sim = BasicSimulator(mock_composition, mock_spectrum_properties)
     intensities = sim.measured_intensities
 
