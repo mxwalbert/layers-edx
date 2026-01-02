@@ -15,8 +15,8 @@ class QuantifyUsingStandards(ABC):
         self,
         beam_energy: float,
         standards: dict[Element, TStandardMaterial],
-        user_references: dict[RegionOfInterest, TReferenceMaterial] = None,
-        culling_strategy: TCullingStrategy = None,
+        user_references: dict[RegionOfInterest, TReferenceMaterial] | None = None,
+        culling_strategy: TCullingStrategy | None = None,
     ):
         self._beam_energy = beam_energy
         self._standards = standards
