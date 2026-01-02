@@ -1,3 +1,4 @@
+from pytest import approx
 import pytest
 import sys
 from pathlib import Path
@@ -41,7 +42,7 @@ def test_mac_composition():
     w_o = sio2.weight_fractions[o]
     expected = w_si * mac_si + w_o * mac_o
 
-    assert mac_sio2 == pytest.approx(expected)
+    assert mac_sio2 == approx(expected)
 
 
 @pytest.mark.epq
@@ -55,7 +56,7 @@ def test_mac_silicon_energies_vs_epq():
     element = Element("Si")
     energies_kev = [1.0, 1.74, 5.0, 10.0, 20.0]
 
-    python_results = []
+    python_results: list[float] = []
     for energy_kev in energies_kev:
         mac = MassAbsorptionCoefficient.compute(element, ToSI.kev(energy_kev))
         python_results.append(mac)
