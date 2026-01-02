@@ -41,7 +41,8 @@ class FilteredSpectrum(DerivedSpectrum):
         else:
             low_channel = self.source.bound(
                 max(
-                    lld, self.source.channel_from_energy(FromSI.ev(self._roi.low_energy))
+                    lld,
+                    self.source.channel_from_energy(FromSI.ev(self._roi.low_energy)),
                 )
             )
             high_channel = self.source.bound(
