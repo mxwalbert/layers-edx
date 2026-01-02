@@ -19,8 +19,8 @@ class FilteredSpectrum(DerivedSpectrum):
         self,
         source: BaseSpectrum,
         fitting_filter: Filter,
-        element: Element = None,
-        roi: RegionOfInterest = None,
+        element: Element | None = None,
+        roi: RegionOfInterest | None = None,
     ):
         super().__init__(source)
         self._fitting_filter = fitting_filter
@@ -35,17 +35,17 @@ class FilteredSpectrum(DerivedSpectrum):
         data = np.copy(self.source.data)
         filtered_data = np.zeros(data.shape)
         error_data = np.zeros(data.shape)
-        if self.roi is None:
+        if self._roi is None:
             data[:lld] = data[lld]
             low_channel = 0
         else:
             low_channel = self.source.bound(
                 max(
-                    lld, self.source.channel_from_energy(FromSI.ev(self.roi.low_energy))
+                    lld, self.source.channel_from_energy(FromSI.ev(self._roi.low_energy))
                 )
             )
             high_channel = self.source.bound(
-                self.source.channel_from_energy(FromSI.ev(self.roi.high_energy))
+                self.source.channel_from_energy(FromSI.ev(self._roi.high_energy))
             )
             data = data[low_channel : high_channel + 1]
         filter_array = self.fitting_filter.filter
@@ -71,12 +71,12 @@ class FilteredSpectrum(DerivedSpectrum):
         self._non_zero_interval = NonZeroInterval(self._data)
 
     @property
-    def element(self) -> Element:
+    def element(self) -> Element | None:
         """Returns the element associated with this ``FilteredSpectrum``."""
         return self._element
 
     @property
-    def roi(self) -> RegionOfInterest:
+    def roi(self) -> RegionOfInterest | None:
         """The ``RegionOfInterest`` for which the filter is applied on the spectrum."""
         return self._roi
 
@@ -114,5 +114,5 @@ class FilteredSpectrum(DerivedSpectrum):
         """The factor to normalize the spectrum based on its dose."""
         return self._normalization
 
-    def counts(self, i) -> float:
+    def counts(self, i: int) -> float:
         return self.data[i] if i < len(self.data) else 0.0
