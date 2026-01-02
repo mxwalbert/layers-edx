@@ -9,8 +9,9 @@ from layers_edx.units import FromSI, ToSI
 
 class StoppingPower:
     """
-    Computes the electronic stopping power of electrons in matter, based on material composition,
-    atomic shell, and beam energy. The stopping power is a measure of energy loss per unit path length.
+    Computes the electronic stopping power of electrons in matter, based on material
+    composition, atomic shell, and beam energy. The stopping power is a measure of
+    energy loss per unit path length.
     """
 
     class Algorithm(Protocol):
@@ -22,9 +23,12 @@ class StoppingPower:
         pics = ProportionalIonizationCrossSection
 
         @classmethod
-        def compute_inv(cls, composition: Composition, shell: AtomicShell, energy: float) -> float:
+        def compute_inv(
+            cls, composition: Composition, shell: AtomicShell, energy: float
+        ) -> float:
             """
-            Method for computing the inverse stopping power for a given composition, atomic shell, and beam energy.
+            Method for computing the inverse stopping power for a given composition,
+            atomic shell, and beam energy.
 
             Args:
                 composition (Composition): Material composition.
@@ -37,10 +41,16 @@ class StoppingPower:
             ...
 
     class PouchouAndPichoir1991(Algorithm):
-
         @classmethod
-        def compute_inv(cls, composition: Composition, shell: AtomicShell, energy: float) -> float:
-            big_m = sum([f * e.atomic_number / e.atomic_weight for e, f in composition.weight_fractions.items()])
+        def compute_inv(
+            cls, composition: Composition, shell: AtomicShell, energy: float
+        ) -> float:
+            big_m = sum(
+                [
+                    f * e.atomic_number / e.atomic_weight
+                    for e, f in composition.weight_fractions.items()
+                ]
+            )
             j = FromSI.kev(cls.mip.compute_composition(composition))
             v0 = FromSI.kev(energy) / j
             d = np.array([6.6e-6, 1.12e-5 * (1.35 - (0.45 * j * j)), 2.2e-6 / j])
@@ -48,11 +58,17 @@ class StoppingPower:
             m = cls.pics.compute_exponent(shell)
             u0 = energy / shell.edge_energy
             t = 1.0 + p - m
-            tmp = (d * np.power(v0 / u0, p) * (((t * np.power(u0, t) * np.log(u0)) - np.power(u0, t)) + 1)) / (t * t)
+            tmp = (
+                d
+                * np.power(v0 / u0, p)
+                * (((t * np.power(u0, t) * np.log(u0)) - np.power(u0, t)) + 1)
+            ) / (t * t)
             return ToSI.gpcm2kev((u0 / (v0 * big_m)) * tmp.sum())
 
     @classmethod
-    def compute_inv(cls, composition: Composition, shell: AtomicShell, energy: float) -> float:
+    def compute_inv(
+        cls, composition: Composition, shell: AtomicShell, energy: float
+    ) -> float:
         """
         Calculates the inverse stopping power using the selected algorithm.
 
@@ -69,7 +85,9 @@ class StoppingPower:
         return cls.PouchouAndPichoir1991.compute_inv(composition, shell, energy)
 
     @classmethod
-    def compute(cls, composition: Composition, shell: AtomicShell, energy: float) -> float:
+    def compute(
+        cls, composition: Composition, shell: AtomicShell, energy: float
+    ) -> float:
         """
         Calculates the stopping power as the reciprocal of the inverse stopping power.
 
