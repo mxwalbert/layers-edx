@@ -11,7 +11,7 @@ class StandardModel(StandardMaterial):
         beam_energy: float,
         element: Element,
         composition: Composition,
-        stripped_elements: set[Element] = None,
+        stripped_elements: set[Element] | None = None,
         min_intensity: float = 1.0e-3,
     ):
         self._model = model
