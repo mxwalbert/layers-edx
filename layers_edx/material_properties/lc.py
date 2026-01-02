@@ -9,8 +9,8 @@ class LeonardCoefficient:
     The Leonard coefficient describes the relative generation of secondary X-rays
     due to primary beam excitation.
 
-    The coefficient depends on the primary electron beam energy and the absorption edge energy
-    of the characteristic X-ray transition of interest.
+    The coefficient depends on the primary electron beam energy and the absorption edge
+    energy of the characteristic X-ray transition of interest.
     """
 
     class Algorithm(Protocol):
@@ -21,11 +21,13 @@ class LeonardCoefficient:
         @classmethod
         def compute(cls, beam_energy: float, xrt: XRayTransition) -> float:
             """
-            Method for computing the Leonard coefficient for a given beam energy and X-ray transition.
+            Method for computing the Leonard coefficient for a given beam energy and
+            X-ray transition.
 
             Args:
                 beam_energy (float): The energy of the primary electron beam (J).
-                xrt (XRayTransition): The X-ray transition for which the coefficient is calculated.
+                xrt (XRayTransition): The X-ray transition for which the coefficient is
+                    calculated.
 
             Returns:
                 float: The Leonard coefficient (dimensionless).
@@ -33,10 +35,12 @@ class LeonardCoefficient:
             ...
 
     class Heinrich1967(Algorithm):
-
         @classmethod
         def compute(cls, beam_energy: float, xrt: XRayTransition) -> float:
-            return 4.5e5 / (math.pow(FromSI.kev(beam_energy), 1.65) - math.pow(FromSI.kev(xrt.edge_energy), 1.65))
+            return 4.5e5 / (
+                math.pow(FromSI.kev(beam_energy), 1.65)
+                - math.pow(FromSI.kev(xrt.edge_energy), 1.65)
+            )
 
     @classmethod
     def compute(cls, beam_energy: float, xrt: XRayTransition) -> float:
@@ -45,7 +49,8 @@ class LeonardCoefficient:
 
         Args:
             beam_energy (float): The primary beam energy (J).
-            xrt (XRayTransition): The X-ray transition for which the coefficient is calculated.
+            xrt (XRayTransition): The X-ray transition for which the coefficient is
+                calculated.
 
         Returns:
             float: The Leonard coefficient (dimensionless).
