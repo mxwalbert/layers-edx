@@ -26,8 +26,8 @@ class QuantifySpectrum(QuantifyUsingStandards):
         detector: TDetector,
         beam_energy: float,
         standards: dict[Element, StandardSpectrum],
-        user_references: dict[RegionOfInterest, ReferenceSpectrum] = None,
-        culling_strategy: TCullingStrategy = None,
+        user_references: dict[RegionOfInterest, ReferenceSpectrum] | None = None,
+        culling_strategy: TCullingStrategy | None = None,
     ):
         super().__init__(beam_energy, standards, user_references, culling_strategy)
         self._detector = detector
