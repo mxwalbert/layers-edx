@@ -1,4 +1,4 @@
-import pytest
+from pytest import approx
 from layers_edx.units import ToSI, FromSI, PhysicalConstants
 
 
@@ -11,8 +11,8 @@ def test_physical_constants():
 
 def test_to_si_energy():
     # 1 eV = 1.602e-19 J
-    assert ToSI.ev(1.0) == pytest.approx(PhysicalConstants.ElementaryCharge)
-    assert ToSI.kev(1.0) == pytest.approx(1000 * PhysicalConstants.ElementaryCharge)
+    assert ToSI.ev(1.0) == approx(PhysicalConstants.ElementaryCharge)
+    assert ToSI.kev(1.0) == approx(1000 * PhysicalConstants.ElementaryCharge)
 
 
 def test_to_si_length():
@@ -28,7 +28,7 @@ def test_to_si_area():
 
 
 def test_to_si_mass():
-    assert ToSI.amu(1.0) == pytest.approx(PhysicalConstants.AMU)
+    assert ToSI.amu(1.0) == approx(PhysicalConstants.AMU)
 
 
 def test_to_si_density():
@@ -38,11 +38,11 @@ def test_to_si_density():
 
 def test_from_si_energy():
     joules = PhysicalConstants.ElementaryCharge
-    assert FromSI.ev(joules) == pytest.approx(1.0)
-    assert FromSI.kev(joules * 1000) == pytest.approx(1.0)
+    assert FromSI.ev(joules) == approx(1.0)
+    assert FromSI.kev(joules * 1000) == approx(1.0)
 
 
 def test_from_si_length():
-    assert FromSI.cm(0.01) == pytest.approx(1.0)
-    assert FromSI.um(1e-6) == pytest.approx(1.0)
-    assert FromSI.nm(1e-9) == pytest.approx(1.0)
+    assert FromSI.cm(0.01) == approx(1.0)
+    assert FromSI.um(1e-6) == approx(1.0)
+    assert FromSI.nm(1e-9) == approx(1.0)
