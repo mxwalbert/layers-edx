@@ -13,17 +13,17 @@ from layers_edx.units import ToSI
 
 
 @pytest.fixture
-def mock_element():
+def mock_element() -> Element:
     return Element("Si")
 
 
 @pytest.fixture
-def mock_composition(mock_element):
+def mock_composition(mock_element: Element) -> Composition:
     return Composition([mock_element], [1.0])
 
 
 @pytest.fixture
-def mock_xrt(mock_element):
+def mock_xrt(mock_element: Element) -> XRayTransition:
     """Silicon Ka1 X-ray transition"""
     return XRayTransition(mock_element, "KA1")
 
@@ -57,7 +57,9 @@ def mock_detector():
 
 
 @pytest.fixture
-def mock_spectrum_properties(mock_detector, mock_beam_energy_20kev):
+def mock_spectrum_properties(
+    mock_detector: EDSDetector, mock_beam_energy_20kev: float
+) -> SpectrumProperties:
     return SpectrumProperties(mock_detector, mock_beam_energy_20kev)
 
 
@@ -68,7 +70,6 @@ def mock_spectrum_properties(mock_detector, mock_beam_energy_20kev):
 
 def epq_classes():
     """Locate EPQ compiled classes directory"""
-    import os
     from pathlib import Path
 
     # Primary location: EPQ compiled classes in venv
@@ -80,7 +81,7 @@ def epq_classes():
     pytest.skip("EPQ classes not found. Run 'mvn compile' in .venv/share/java/EPQ/.")
 
 
-def run_java_test(java_file: str) -> dict:
+def run_java_test(java_file: str):
     """
     Compile and run a Java test file, return JSON output
 
@@ -140,7 +141,7 @@ def run_java_test(java_file: str) -> dict:
             )
 
 
-def compare_results(python_value, java_value, tolerance=0.01):
+def compare_results(python_value, java_value, tolerance: float = 0.01):
     """
     Compare Python and Java results with relative tolerance
 
@@ -163,7 +164,7 @@ def compare_results(python_value, java_value, tolerance=0.01):
     return np.allclose(py_arr, java_arr, rtol=tolerance)
 
 
-def pytest_configure(config):
+def pytest_configure(config: pytest.Config) -> None:
     """Register custom markers"""
     config.addinivalue_line(
         "markers", "epq: EPQ cross-validation tests (requires Java and EPQ jar)"
