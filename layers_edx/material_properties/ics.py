@@ -176,9 +176,9 @@ class AbsoluteIonizationCrossSection(IonizationCrossSection):
             for line in read_csv("SalvatXionA", value_offset=1, column_offset=1)
         ]
 
-        BE = []
-        ANLJ = []
-        G = []
+        BE: list[list[float]] = []
+        ANLJ: list[list[float]] = []
+        G: list[list[list[float]]] = []
         for data in [
             [line[i : i + 6] for i in range(0, len(line), 6)]
             for line in read_csv("SalvatXionB", value_offset=1, column_offset=1)
