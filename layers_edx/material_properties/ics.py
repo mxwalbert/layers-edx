@@ -25,7 +25,7 @@ class IonizationCrossSection(ABC):
         Returns:
             float: Dimensionless weighting factor.
         """
-        n = shell.family - shell.family_from_name('K') + 1
+        n = shell.family - shell.family_from_name("K") + 1
         return shell.capacity / (2.0 * n * n)
 
     @classmethod
@@ -61,7 +61,8 @@ class ProportionalIonizationCrossSection(IonizationCrossSection):
         @classmethod
         def compute_family(cls, shell: AtomicShell, beam_energy: float) -> float:
             """
-            Computes the family-wise ionization cross-section, excluding shell dependence.
+            Computes the family-wise ionization cross-section, excluding shell
+            dependence.
 
             Args:
                 shell (AtomicShell): The atomic shell of interest.
@@ -74,7 +75,9 @@ class ProportionalIonizationCrossSection(IonizationCrossSection):
             u = FromSI.kev(beam_energy) / e_crit
             if u <= 1.0:
                 return 0.0
-            return math.log(u) / ((e_crit * e_crit) * math.pow(u, cls.compute_exponent(shell)))
+            return math.log(u) / (
+                (e_crit * e_crit) * math.pow(u, cls.compute_exponent(shell))
+            )
 
         @classmethod
         @abstractmethod
@@ -91,18 +94,17 @@ class ProportionalIonizationCrossSection(IonizationCrossSection):
             pass
 
     class Pouchou1986(Algorithm):
-
         @classmethod
         def compute_exponent(cls, shell: AtomicShell) -> float:
             za = shell.element.atomic_number
-            if shell.family == shell.family_from_name('K'):
+            if shell.family == shell.family_from_name("K"):
                 return 0.86 + (0.12 * math.exp((-za * za) / 25.0))
-            elif shell.family == shell.family_from_name('L'):
+            elif shell.family == shell.family_from_name("L"):
                 return 0.82
-            elif shell.family == shell.family_from_name('M'):
+            elif shell.family == shell.family_from_name("M"):
                 return 0.78
             else:
-                return float('nan')
+                return float("nan")
 
     @classmethod
     def compute_shell(cls, shell: AtomicShell, beam_energy: float) -> float:
@@ -138,7 +140,8 @@ class ProportionalIonizationCrossSection(IonizationCrossSection):
 
 class AbsoluteIonizationCrossSection(IonizationCrossSection):
     """
-    Computes absolute ionization cross-sections based on physical models and tabulated fits.
+    Computes absolute ionization cross-sections based on physical models and tabulated
+    fits.
 
     This implementation uses the model of Bote & Salvat (2008) which includes detailed
     parameterizations for both low- and high-energy regimes and atomic shells.
@@ -165,16 +168,21 @@ class AbsoluteIonizationCrossSection(IonizationCrossSection):
             pass
 
     class BoteSalvat2008(Algorithm):
-
         FPIAB2 = 4.0 * math.pi * FromSI.cm(PhysicalConstants.BohrRadius) ** 2
         REV = FromSI.ev(PhysicalConstants.ElectronRestMass)
 
-        A = [[line[i:i + 5] for i in range(0, len(line), 5)] for line in read_csv('SalvatXionA', value_offset=1, column_offset=1)]
+        A = [
+            [line[i : i + 5] for i in range(0, len(line), 5)]
+            for line in read_csv("SalvatXionA", value_offset=1, column_offset=1)
+        ]
 
         BE = []
         ANLJ = []
         G = []
-        for data in [[line[i:i + 6] for i in range(0, len(line), 6)] for line in read_csv('SalvatXionB', value_offset=1, column_offset=1)]:
+        for data in [
+            [line[i : i + 6] for i in range(0, len(line), 6)]
+            for line in read_csv("SalvatXionB", value_offset=1, column_offset=1)
+        ]:
             be = [block[0] for block in data]
             anlj = [block[1] for block in data]
             g = [block[2:] for block in data]
@@ -196,16 +204,31 @@ class AbsoluteIonizationCrossSection(IonizationCrossSection):
                     return 0.0
                 a = cls.A[iz][ish]
                 opu = 1.0 / (1.0 + over_v)
-                opu2 = opu ** 2
-                ffitlo = a[0] + a[1] * over_v + opu * (a[2] + opu2 * (a[3] + opu2 * a[4]))
+                opu2 = opu**2
+                ffitlo = (
+                    a[0] + a[1] * over_v + opu * (a[2] + opu2 * (a[3] + opu2 * a[4]))
+                )
                 xione = (over_v - 1.0) * math.pow(ffitlo / over_v, 2.0)
             else:
                 if ish >= len(cls.BE[iz]):
                     return 0.0
-                beta2 = (eev * (eev + (2.0 * cls.REV))) / ((eev + cls.REV) * (eev + cls.REV))
+                beta2 = (eev * (eev + (2.0 * cls.REV))) / (
+                    (eev + cls.REV) * (eev + cls.REV)
+                )
                 x = math.sqrt(eev * (eev + (2.0 * cls.REV))) / cls.REV
                 g = cls.G[iz][ish]
-                ffitup = (((2.0 * math.log(x)) - beta2) * (1.0 + (g[0] / x))) + g[1] + (g[2] * math.pow((cls.REV * cls.REV) / ((eev + cls.REV) * (eev + cls.REV)), 0.25)) + (g[3] / x)
+                ffitup = (
+                    (((2.0 * math.log(x)) - beta2) * (1.0 + (g[0] / x)))
+                    + g[1]
+                    + (
+                        g[2]
+                        * math.pow(
+                            (cls.REV * cls.REV) / ((eev + cls.REV) * (eev + cls.REV)),
+                            0.25,
+                        )
+                    )
+                    + (g[3] / x)
+                )
                 factor = cls.ANLJ[iz][ish] / beta2
                 xione = ((factor * over_v) / (over_v + cls.BE[iz][ish])) * ffitup
             return ToSI.cm(1) ** 2 * cls.FPIAB2 * xione
