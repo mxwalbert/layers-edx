@@ -78,13 +78,13 @@ class TransitionProbabilities:
             }
 
     class Endlib1997Tweaked(Endlib1997):
-        TWEAKED = False
+        _tweaked = False
 
         @classmethod
         def tweak(cls):
-            if cls.TWEAKED:
+            if cls._tweaked:
                 return
-            cls.TWEAKED = True
+            cls._tweaked = True
             for element, data in cls.RADIATIVE.items():
                 for i, (xrt, ionized, probability) in enumerate(data):
                     if xrt.source.shell == AtomicShell.from_name(
