@@ -79,7 +79,7 @@ def test_xrt_silicon_k_vs_epq():
 
     # Get Si K transitions from layers-edx
     element = Element("Si")
-    python_transitions = []
+    python_transitions: list[dict[str, float]] = []
 
     for epq_xrt in epq_results["transitions"]:
         # Try to match by name
