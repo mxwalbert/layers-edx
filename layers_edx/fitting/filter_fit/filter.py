@@ -4,7 +4,10 @@ import numpy.typing as npt
 
 
 class Filter(ABC):
-    """An abstract base class defining the structure for filters for filter fitting spectra."""
+    """
+    An abstract base class defining the structure for fitting filters for filter
+    fitting spectra.
+    """
 
     @staticmethod
     def default_variance_correction_factor(lw: float, uw: float) -> float:
@@ -37,12 +40,15 @@ class Filter(ABC):
     def filter_width(self) -> float:
         """Returns the width of the filter in eV."""
         if self.filter is None:
-            return float('nan')
+            return float("nan")
         return self.channel_width * len(self.filter)
 
     @abstractmethod
     def _initialize_filter(self):
-        """Implements the actual filter logic. Populates the `self._filter` and `self._variance_correction_factor`."""
+        """
+        Implements the actual filter logic.
+        Populates the `self._filter` and `self._variance_correction_factor`.
+        """
 
 
 class TopHatFilter(Filter):
@@ -53,9 +59,13 @@ class TopHatFilter(Filter):
         m = max(int(round(self.width / self.channel_width)) - 1 // 2, 2)
         n = m
         filter_len = (2 * n) + (2 * m) + 1
-        new_filter = [-1.0 if i < n or i >= n + (2 * m) + 1 else 0 for i in range(filter_len)]
+        new_filter = [
+            -1.0 if i < n or i >= n + (2 * m) + 1 else 0 for i in range(filter_len)
+        ]
         k = (2.0 * n) / ((2.0 * m) + 1.0)
         for i in range((2 * m) + 1):
             new_filter[i + n] = k
         self._filter = new_filter
-        self._variance_correction_factor = self.default_variance_correction_factor(m, 2 * m + 1)
+        self._variance_correction_factor = self.default_variance_correction_factor(
+            m, 2 * m + 1
+        )
