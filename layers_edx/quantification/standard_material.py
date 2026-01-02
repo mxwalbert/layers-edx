@@ -16,12 +16,12 @@ class StandardMaterial(ABC):
         self,
         element: Element,
         composition: Composition,
-        stripped_elements: set[Element] = None,
+        stripped_elements: set[Element] | None = None,
         min_intensity: float = 1.0e-3,
     ):
         self._element = element
         self._composition = composition
-        self._stripped_elements = (
+        self._stripped_elements: set[Element] = (
             set() if stripped_elements is None else stripped_elements
         )
         self._min_intensity = min_intensity
@@ -47,7 +47,7 @@ class StandardMaterial(ABC):
 
     def _compute_required_references(self) -> None:
         for roi in self.roi_set.rois:
-            required_references = set()
+            required_references: set[RegionOfInterest] = set()
             for all_roi in self._all_roi_set.rois:
                 if roi.intersects(all_roi):
                     for other in self._other_roi_sets:
