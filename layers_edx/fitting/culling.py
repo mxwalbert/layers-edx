@@ -43,9 +43,9 @@ class CullByVariance(CullingStrategy):
     def compute(
         self, parameters: list[TParameter], fit_result: npt.NDArray[np.floating]
     ) -> set[Element]:
-        remove = set()
+        remove: set[Element] = set()
         for element in set([p.element for p in parameters]):
-            kratios = []
+            kratios: list[float] = []
             for i, p in enumerate(parameters):
                 if p.element == element:
                     kratios.append(fit_result[i])
