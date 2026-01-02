@@ -21,7 +21,7 @@ class StandardSpectrum(StandardMaterial):
     ):
         self._spectrum = spectrum
         self._detector = spectrum.properties.detector
-        if not isinstance(self.detector, EDSDetector):
+        if not isinstance(self._detector, EDSDetector):
             raise ValueError("Detector must be an instance of the EDSDetector class")
         self._beam_energy = ToSI.kev(spectrum.properties.beam_energy)
         super().__init__(element, composition, stripped_elements, min_intensity)
@@ -46,12 +46,12 @@ class StandardSpectrum(StandardMaterial):
         X-ray transition which are defined by the detector's lineshape model and limited
         by the minimum intensity.
         """
-        model = self.detector.calibration.model
+        model = self._detector.calibration.model
         broadening = ToSI.ev(model.fwhm_at_mn_ka)
         roi_set = RegionOfInterestSet(
             model, self.min_intensity, 0.6 * broadening, 0.6 * broadening
         )
-        for xrt in self.detector.visible_xrts(element, self.beam_energy).xrts:
+        for xrt in self._detector.visible_xrts(element, self.beam_energy).xrts:
             roi_set.add_xrt(xrt)
         return roi_set
 
@@ -62,7 +62,7 @@ class StandardSpectrum(StandardMaterial):
         """
         intensities: dict[XRayTransition, float] = {}
         spectrum_properties = SpectrumProperties(
-            detector=self.detector,
+            detector=self._detector,
             beam_energy=FromSI.kev(self.beam_energy),
             probe_current=1.0,
             live_time=60.0,
