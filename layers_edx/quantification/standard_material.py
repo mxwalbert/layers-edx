@@ -114,7 +114,7 @@ class StandardMaterial(ABC):
         """
         return (
             math.sqrt(self.total_intensity(roi))
-            if roi.first_element in self.composition
+            if roi.first_element in self.composition.elements
             else 0.0
         )
 
