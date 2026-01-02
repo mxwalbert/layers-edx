@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 import copy
 import numpy.typing as npt
+import numpy as np
 
 
 class Filter(ABC):
@@ -21,11 +22,11 @@ class Filter(ABC):
         self._initialize_filter()
 
     @property
-    def filter(self) -> npt.NDArray[float]:
+    def filter(self) -> npt.NDArray[np.floating] | None:
         return copy.copy(self._filter)
 
     @property
-    def variance_correction_factor(self) -> float:
+    def variance_correction_factor(self) -> float | None:
         return self._variance_correction_factor
 
     @property
