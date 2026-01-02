@@ -38,7 +38,7 @@ class Interval:
         return intervals
 
     @classmethod
-    def extract(cls, length: int, intervals: list[Interval]) -> npt.NDArray[bool]:
+    def extract(cls, length: int, intervals: list[Interval]) -> npt.NDArray[np.bool]:
         """
         Generates a boolean array with the provided `length` and fills the `intervals`
         with `True`.
