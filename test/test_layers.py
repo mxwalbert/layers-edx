@@ -1,10 +1,14 @@
 import pytest
+from layers_edx.element import Composition
 from layers_edx.layers import Layer, corrected_intensities
+from layers_edx.spectrum.spectrum_properties import SpectrumProperties
 from layers_edx.units import ToSI
 from layers_edx.xrt import XRayTransition
 
 
-def test_layer_creation(mock_composition, mock_spectrum_properties):
+def test_layer_creation(
+    mock_composition: Composition, mock_spectrum_properties: SpectrumProperties
+):
     mass_thickness = ToSI.gpcm2(100e-6)  # 100 nm approx
     layer = Layer(mock_composition, mass_thickness, mock_spectrum_properties)
 
@@ -12,7 +16,9 @@ def test_layer_creation(mock_composition, mock_spectrum_properties):
     assert layer.mass_thickness == mass_thickness
 
 
-def test_layer_ideal_intensities(mock_composition, mock_spectrum_properties):
+def test_layer_ideal_intensities(
+    mock_composition: Composition, mock_spectrum_properties: SpectrumProperties
+):
     mass_thickness = ToSI.gpcm2(100e-6)
     layer = Layer(mock_composition, mass_thickness, mock_spectrum_properties)
 
@@ -33,7 +39,9 @@ def test_layer_ideal_intensities(mock_composition, mock_spectrum_properties):
 @pytest.mark.skip(
     reason="Numerical integration issues with thin layers - needs more investigation"
 )
-def test_corrected_intensities(mock_composition, mock_spectrum_properties):
+def test_corrected_intensities(
+    mock_composition: Composition, mock_spectrum_properties: SpectrumProperties
+):
     # Create a single bulk layer (simpler case for testing)
     # Using a realistic bulk thickness
     import math
