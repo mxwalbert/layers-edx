@@ -1,4 +1,4 @@
-import pytest
+from pytest import approx
 from layers_edx.element import Element, Composition, Material
 
 
@@ -19,7 +19,7 @@ def test_element_properties():
     assert c.ionization_energy > 0
 
     # Check specific values (approximate)
-    assert c.atomic_weight == pytest.approx(12.01, rel=1e-3)
+    assert c.atomic_weight == approx(12.01, rel=1e-3)
 
 
 def test_element_comparison():
@@ -37,8 +37,8 @@ def test_composition_creation_weight():
     comp = Composition([si, o], [28.0855, 2 * 15.9994])
 
     assert len(comp.elements) == 2
-    assert comp.weight_fractions[si] == pytest.approx(28.0855 / (28.0855 + 31.9988))
-    assert comp.weight_fractions[o] == pytest.approx(31.9988 / (28.0855 + 31.9988))
+    assert comp.weight_fractions[si] == approx(28.0855 / (28.0855 + 31.9988))
+    assert comp.weight_fractions[o] == approx(31.9988 / (28.0855 + 31.9988))
 
 
 def test_composition_creation_atomic():
@@ -48,8 +48,8 @@ def test_composition_creation_atomic():
     comp = Composition([si, o], [1.0, 2.0], weight=False)
 
     atomic_fracs = comp.atomic_fractions
-    assert atomic_fracs[si] == pytest.approx(1.0 / 3.0)
-    assert atomic_fracs[o] == pytest.approx(2.0 / 3.0)
+    assert atomic_fracs[si] == approx(1.0 / 3.0)
+    assert atomic_fracs[o] == approx(2.0 / 3.0)
 
 
 def test_composition_normalization():
@@ -74,7 +74,7 @@ def test_composition_properties():
 def test_material():
     si = Element("Si")
     mat = Material(si)
-    assert mat.density == pytest.approx(2.35, rel=0.1)  # Si density ~2.33
+    assert mat.density == approx(2.35, rel=0.1)  # Si density ~2.33
 
     # Custom density
     mat_custom = Material(si, density=10.0)
