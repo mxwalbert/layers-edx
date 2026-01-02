@@ -8,12 +8,12 @@ from layers_edx.detector.detector import TDetector
 from layers_edx.element import Composition
 
 
-def unit_vector(vector: npt.NDArray[float]):
+def unit_vector(vector: npt.NDArray[np.floating]):
     """Returns the unit vector of the provided vector."""
     return vector / np.linalg.norm(vector)
 
 
-def angle_between(v1: npt.NDArray[float], v2: npt.NDArray[float]) -> float:
+def angle_between(v1: npt.NDArray[np.floating], v2: npt.NDArray[np.floating]) -> float:
     """Returns the angle in radians between vectors `v1` and `v2` in radians (rad)."""
     v1_u = unit_vector(v1)
     v2_u = unit_vector(v2)
@@ -43,7 +43,7 @@ class SpectrumProperties:
             derived understanding of composition of the sample.
     """
 
-    detector: TDetector = None
+    detector: TDetector | None = None
     beam_energy: float = 20.0
     probe_current: float = 1.0
     live_time: float = 60.0
@@ -65,7 +65,7 @@ class SpectrumProperties:
         return self.probe_current * self.live_time
 
     @cached_property
-    def sample_position(self) -> npt.NDArray[float]:
+    def sample_position(self) -> npt.NDArray[np.floating]:
         """
         The coordinates of the sample derived from the working distance.
 
