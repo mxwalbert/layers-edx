@@ -3,7 +3,6 @@ from layers_edx.spectrum.base_spectrum import BaseSpectrum
 
 
 class DerivedSpectrum(BaseSpectrum):
-
     def __init__(self, source: BaseSpectrum):
         self._source = source
         self._properties = copy.copy(source.properties)
