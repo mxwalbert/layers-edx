@@ -4,11 +4,12 @@ from layers_edx.xrt import XRayTransitionSet, XRayTransition
 
 
 class ModelParameter(Parameter):
-
-    def __init__(self,
-                 element: Element,
-                 xrt_set: XRayTransitionSet,
-                 intensities: dict[XRayTransition, float]):
+    def __init__(
+        self,
+        element: Element,
+        xrt_set: XRayTransitionSet,
+        intensities: dict[XRayTransition, float],
+    ):
         self._intensities = intensities
         super().__init__(element, xrt_set)
 
