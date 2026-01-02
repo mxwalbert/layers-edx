@@ -34,10 +34,12 @@ class MassAbsorptionCoefficient:
 
     class Chantler2005(Algorithm):
         data: llf = [list(x) for x in zip(*read_csv("FFastMAC"))]
-        ENERGY: llf = [[]] + [
+        # 0th index is Z=0 placeholder
+        ENERGY: llf = [[0.0]] + [
             [ToSI.kev(value) for value in x[: x.index(0.0)]] for x in data[0::2]
         ]
-        MAC: llf = [[]] + [
+        # 0th index is Z=0 placeholder
+        MAC: llf = [[0.0]] + [
             [ToSI.cm2pg(value) for value in x[: x.index(0.0)]] for x in data[1::2]
         ]
 
