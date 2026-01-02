@@ -17,4 +17,4 @@ class ReferenceMaterial(ABC):
         return self.composition.elements
 
 
-TReferenceMaterial = TypeVar('TReferenceMaterial', bound=ReferenceMaterial)
+TReferenceMaterial = TypeVar("TReferenceMaterial", bound=ReferenceMaterial)
