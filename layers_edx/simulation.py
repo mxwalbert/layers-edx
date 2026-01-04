@@ -14,8 +14,12 @@ from layers_edx.xrt import XRayTransition
 
 
 class SpectrumSimulator(ABC):
-
-    def __init__(self, composition: Composition, properties: SpectrumProperties, shells: set[AtomicShell] = None):
+    def __init__(
+        self,
+        composition: Composition,
+        properties: SpectrumProperties,
+        shells: set[AtomicShell] | None = None,
+    ):
         self._composition = composition
         self._properties = properties
         if shells is None:
@@ -54,20 +58,28 @@ class SpectrumSimulator(ABC):
     @property
     def measured_intensities(self) -> dict[XRayTransition, float]:
         detector: EDSDetector = self.properties.detector
-        scale = 1.0 / (4.0 * math.pi * self.properties.sample_distance ** 2)
-        result = {}
+        scale = 1.0 / (4.0 * math.pi * self.properties.sample_distance**2)
+        result: dict[XRayTransition, float] = {}
         for xrt, intensity in self.emitted_intensities.items():
-            channel = int((FromSI.ev(xrt.energy) - detector.calibration.zero_offset) / detector.calibration.channel_width)
+            channel = int(
+                (FromSI.ev(xrt.energy) - detector.calibration.zero_offset)
+                / detector.calibration.channel_width
+            )
             if 0 <= channel < detector.efficiency.shape[0]:
                 result[xrt] = intensity * scale * float(detector.efficiency[channel])
         return result
 
 
 class BasicSimulator(SpectrumSimulator):
-
-    def __init__(self, composition: Composition, properties: SpectrumProperties, shells: set[AtomicShell] = None,
-                 ca: Type[Correction] = XPP, tp: Type[TransitionProbabilities] = TransitionProbabilities,
-                 aics: Type[AbsoluteIonizationCrossSection] = AbsoluteIonizationCrossSection):
+    def __init__(
+        self,
+        composition: Composition,
+        properties: SpectrumProperties,
+        shells: set[AtomicShell] | None = None,
+        ca: Type[Correction] = XPP,
+        tp: Type[TransitionProbabilities] = TransitionProbabilities,
+        aics: Type[AbsoluteIonizationCrossSection] = AbsoluteIonizationCrossSection,
+    ):
         super().__init__(composition, properties, shells)
         self.ca = ca
         self.tp = tp
@@ -75,13 +87,17 @@ class BasicSimulator(SpectrumSimulator):
 
     @property
     def emitted_intensities(self) -> dict[XRayTransition, float]:
-        result = {}
+        result: dict[XRayTransition, float] = {}
         e0 = ToSI.kev(self.properties.beam_energy)
         dose = self.properties.dose * 1e-9 / PhysicalConstants.ElementaryCharge
         for shell in self.shells:
             if shell.exists and shell.energy < e0:
                 ca = self.ca(self.composition, shell, self.properties)
-                ics = self.aics.compute_shell(shell, e0) * dose * self.composition.atoms_per_kg[shell.element]
+                ics = (
+                    self.aics.compute_shell(shell, e0)
+                    * dose
+                    * self.composition.atoms_per_kg[shell.element]
+                )
                 for xrt, w in self.tp.transitions(shell, 0.0).items():
                     if w >= 1e-5:
                         s = result[xrt] if xrt in result else 0.0

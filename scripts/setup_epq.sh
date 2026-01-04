@@ -84,7 +84,7 @@ if [ "$SKIP_CLONE" = false ]; then
             SKIP_CLONE=true
         fi
     fi
-    
+
     if [ "$SKIP_CLONE" = false ]; then
         echo -e "\n${YELLOW}Cloning EPQ repository...${NC}"
         pushd "$EPQ_DIR" > /dev/null
@@ -99,9 +99,24 @@ if [ "$SKIP_CLONE" = false ]; then
     fi
 fi
 
+# Create pom.xml from template
+echo -e "\n${YELLOW}Creating pom.xml from template...${NC}"
+pushd "$EPQ_PATH" > /dev/null
+if [ ! -f "pom.xml" ]; then
+    # Get version from the revision file if available
+    VERSION="1.0"
+    if [ -f "src/gov/nist/microanalysis/EPQLibrary/revision" ]; then
+        VERSION=$(cat src/gov/nist/microanalysis/EPQLibrary/revision | head -n 1 | tr -d '\n')
+    fi
+
+    sed "s/NUMBER_VERSION/$VERSION/g" pom.template > pom.xml
+    echo -e "${GREEN}pom.xml created with version: $VERSION${NC}"
+else
+    echo -e "${GREEN}pom.xml already exists${NC}"
+fi
+
 # Compile EPQ
 echo -e "\n${YELLOW}Compiling EPQ library...${NC}"
-pushd "$EPQ_PATH" > /dev/null
 if mvn compile; then
     echo -e "${GREEN}EPQ compiled successfully!${NC}"
 else

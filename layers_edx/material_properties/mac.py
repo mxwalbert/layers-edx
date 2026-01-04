@@ -8,8 +8,8 @@ from layers_edx.units import ToSI
 
 class MassAbsorptionCoefficient:
     """
-    Provides functionality to compute the mass absorption coefficient (MAC) for a given element
-    or material composition at a specified photon energy.
+    Provides functionality to compute the mass absorption coefficient (MAC) for a given
+    element or material composition at a specified photon energy.
     """
 
     class Algorithm(Protocol):
@@ -20,7 +20,8 @@ class MassAbsorptionCoefficient:
         @classmethod
         def compute(cls, element: Element, energy: float) -> float:
             """
-            Method for computing the mass absorption coefficient for a single element at the given energy.
+            Method for computing the mass absorption coefficient for a single element at
+            the given energy.
 
             Args:
                 element (Element): The element for which the coefficient is computed.
@@ -32,10 +33,15 @@ class MassAbsorptionCoefficient:
             ...
 
     class Chantler2005(Algorithm):
-
-        data: llf = [list(x) for x in zip(*read_csv('FFastMAC'))]
-        ENERGY: llf = [[]] + [[ToSI.kev(value) for value in x[:x.index(0.0)]] for x in data[0::2]]
-        MAC: llf = [[]] + [[ToSI.cm2pg(value) for value in x[:x.index(0.0)]] for x in data[1::2]]
+        data: llf = [list(x) for x in zip(*read_csv("FFastMAC"))]
+        # 0th index is Z=0 placeholder
+        ENERGY: llf = [[0.0]] + [
+            [ToSI.kev(value) for value in x[: x.index(0.0)]] for x in data[0::2]
+        ]
+        # 0th index is Z=0 placeholder
+        MAC: llf = [[0.0]] + [
+            [ToSI.cm2pg(value) for value in x[: x.index(0.0)]] for x in data[1::2]
+        ]
 
         @classmethod
         def compute(cls, element: Element, energy: float) -> float:
@@ -46,39 +52,52 @@ class MassAbsorptionCoefficient:
             le, ue = cls.ENERGY[z][energy_idx - 1], cls.ENERGY[z][energy_idx]
             lm, um = cls.MAC[z][energy_idx - 1], cls.MAC[z][energy_idx]
             try:
-                return math.exp(math.log(lm) + (math.log(um / lm) * (math.log(energy / le) / math.log(ue / le))))
+                return math.exp(
+                    math.log(lm)
+                    + (math.log(um / lm) * (math.log(energy / le) / math.log(ue / le)))
+                )
             except ValueError:
                 return 0.0
 
     @classmethod
     def compute(cls, element: Element, energy: float) -> float:
         """
-        Computes the mass absorption coefficient for the specified element at the specified energy.
+        Computes the mass absorption coefficient for the specified element at the
+        specified energy.
 
         Args:
-            element (Element): The element for which the mass absorption coefficient is to be calculated.
+            element (Element): The element for which the mass absorption coefficient is
+                to be calculated.
             energy (float): The energy of the x-ray beam (J).
 
         Returns:
-            float: The mass absorption coefficient for the specified element at the given energy (m^2/kg).
-                Returns NaN if no valid value is found.
+            float: The mass absorption coefficient for the specified element at the
+                given energy (m^2/kg). Returns NaN if no valid value is found.
         """
         for database in [cls.Chantler2005]:
             value = database.compute(element, energy)
             if value > 0.0:
                 return value
-        return float('nan')
+        return float("nan")
 
     @classmethod
     def compute_composition(cls, composition: Composition, energy: float) -> float:
         """
-        Calculates the mass absorption coefficient for the specified composition at the specified energy.
+        Calculates the mass absorption coefficient for the specified composition at the
+        specified energy.
 
         Args:
-            composition (Composition): The composition of elements with their weight fractions.
+            composition (Composition): The composition of elements with their weight
+                fractions.
             energy (float): The energy of the x-ray beam in joules (J).
 
         Returns:
-            float: The mass absorption coefficient for the given composition at the specified energy (m^2/kg).
+            float: The mass absorption coefficient for the given composition at the
+            specified energy (m^2/kg).
         """
-        return sum([cls.compute(elm, energy) * frac for elm, frac in composition.raw_weight_fractions.items()])
+        return sum(
+            [
+                cls.compute(elm, energy) * frac
+                for elm, frac in composition.raw_weight_fractions.items()
+            ]
+        )

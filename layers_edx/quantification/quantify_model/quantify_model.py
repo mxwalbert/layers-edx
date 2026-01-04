@@ -9,7 +9,6 @@ from layers_edx.xrt import XRayTransition
 
 
 class QuantifyModel(QuantifyUsingStandards):
-
     @staticmethod
     def create_reference(standard: StandardModel) -> ReferenceModel:
         return ReferenceModel(standard.model, standard.composition)

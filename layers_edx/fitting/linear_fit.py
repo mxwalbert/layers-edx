@@ -13,10 +13,11 @@ from layers_edx.xrt import XRayTransition
 
 
 class LinearFit(ABC):
-
-    def __init__(self,
-                 references: dict[RegionOfInterest, TReferenceMaterial],
-                 culling_strategy: TCullingStrategy = None):
+    def __init__(
+        self,
+        references: dict[RegionOfInterest, TReferenceMaterial],
+        culling_strategy: TCullingStrategy = None,
+    ):
         self._references = references
         self._culling_strategy = culling_strategy
         self._assign_parameters()
@@ -31,7 +32,9 @@ class LinearFit(ABC):
 
     @property
     def culling_strategy(self) -> TCullingStrategy:
-        """The implemented strategy based on which elements are removed from the fitting."""
+        """
+        The implemented strategy based on which elements are removed from the fitting.
+        """
         return self._culling_strategy
 
     @property
@@ -45,11 +48,15 @@ class LinearFit(ABC):
 
     @property
     def num_fit_params(self) -> int:
-        """The number of fitting parameters which corresponds to the number of references."""
+        """
+        The number of fitting parameters which corresponds to the number of references.
+        """
         return len(self.parameters)
 
     @abstractmethod
-    def features_and_targets(self, unknown: Any, selected: list[TParameter]) -> tuple[npt.NDArray[np.floating], npt.NDArray[np.floating]]:
+    def features_and_targets(
+        self, unknown: Any, selected: list[TParameter]
+    ) -> tuple[npt.NDArray[np.floating], npt.NDArray[np.floating]]:
         """Returns a tuple of features and targets to be used fpr the fitting."""
 
     def get_k_ratios(self, unknown: dict[XRayTransition, float]) -> KRatioSet:
@@ -93,4 +100,4 @@ class LinearFit(ABC):
         return result
 
 
-TLinearFit = TypeVar('TLinearFit', bound=LinearFit)
+TLinearFit = TypeVar("TLinearFit", bound=LinearFit)

@@ -10,26 +10,35 @@ from layers_edx.roi import RegionOfInterestSet, RegionOfInterest
 def mock_model(mock_xrt):
     return {mock_xrt: 100.0}
 
+
 @pytest.fixture
-def mock_standard_model(mock_element, mock_composition, mock_model, mock_beam_energy_15kev):
-    return StandardModel(mock_model, mock_beam_energy_15kev, mock_element, mock_composition)
+def mock_standard_model(
+    mock_element, mock_composition, mock_model, mock_beam_energy_15kev
+):
+    return StandardModel(
+        mock_model, mock_beam_energy_15kev, mock_element, mock_composition
+    )
 
 
 @pytest.fixture
 def mock_reference_model(mock_composition, mock_model):
     return ReferenceModel(mock_model, mock_composition)
 
+
 def test_standard_model_create_roi(mock_element, mock_standard_model):
     roi_set = mock_standard_model.create_element_roi_set(mock_element)
     assert isinstance(roi_set, RegionOfInterestSet)
+
 
 def test_standard_model_compute_intensities(mock_xrt, mock_standard_model):
     roi = RegionOfInterest(mock_xrt)
     intensities = mock_standard_model.compute_intensities(roi)
     assert intensities[mock_xrt] == 100.0
 
+
 def test_reference_model(mock_xrt, mock_reference_model):
     assert mock_reference_model.model[mock_xrt] == 100.0
+
 
 @pytest.fixture
 def mock_quantify_model(mock_element, mock_standard_model, mock_beam_energy_15kev):
@@ -40,6 +49,7 @@ def mock_quantify_model(mock_element, mock_standard_model, mock_beam_energy_15ke
 def test_quantify_model_create_reference(mock_quantify_model, mock_standard_model):
     reference = mock_quantify_model.create_reference(mock_standard_model)
     assert isinstance(reference, ReferenceModel)
+
 
 def test_quantify_model_compute(mock_xrt, mock_quantify_model):
     unknown = {mock_xrt: 200.0}

@@ -7,20 +7,30 @@ from layers_edx.fitting.parameter import TParameter
 
 
 class CullingStrategy(ABC):
-    """A mechanism to determine which elements should be removed from the fit based on insufficient evidence."""
+    """
+    A mechanism to determine which elements should be removed from the fit based on
+    insufficient evidence.
+    """
 
     @abstractmethod
-    def compute(self, parameters: list[TParameter], fit_result: npt.NDArray[np.floating]) -> set[Element]:
-        """Takes the calculated fitting parameters and determines based on these whether an element is present. If the
-        element is not likely to be present it is added to the returned set."""
+    def compute(
+        self, parameters: list[TParameter], fit_result: npt.NDArray[np.floating]
+    ) -> set[Element]:
+        """
+        Takes the calculated fitting parameters and determines based on these whether
+        an element is present. If the element is not likely to be present it is added to
+        the returned set.
+        """
 
 
-TCullingStrategy = TypeVar('TCullingStrategy', bound=CullingStrategy)
+TCullingStrategy = TypeVar("TCullingStrategy", bound=CullingStrategy)
 
 
 class CullByVariance(CullingStrategy):
-    """Considers all the evidence (k-ratios) associated with an element and keeps only those that exceed a
-    user-specified level of statistical significance."""
+    """
+    Considers all the evidence (k-ratios) associated with an element and keeps only
+    those that exceed a user-specified level of statistical significance.
+    """
 
     def __init__(self, significance: float):
         self._significance = significance
@@ -30,14 +40,18 @@ class CullByVariance(CullingStrategy):
         """Elements with k-ratios below this value are removed."""
         return self._significance
 
-    def compute(self, parameters: list[TParameter], fit_result: npt.NDArray[np.floating]) -> set[Element]:
-        remove = set()
+    def compute(
+        self, parameters: list[TParameter], fit_result: npt.NDArray[np.floating]
+    ) -> set[Element]:
+        remove: set[Element] = set()
         for element in set([p.element for p in parameters]):
-            kratios = []
+            kratios: list[float] = []
             for i, p in enumerate(parameters):
                 if p.element == element:
                     kratios.append(fit_result[i])
             kratio_mean = np.mean(kratios)
-            if not np.isnan(kratio_mean) and kratio_mean < self.significance * np.var(kratio_mean):
+            if not np.isnan(kratio_mean) and kratio_mean < self.significance * np.var(
+                kratio_mean
+            ):
                 remove.add(element)
         return remove

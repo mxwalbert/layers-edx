@@ -8,8 +8,13 @@ class Interval:
 
     @staticmethod
     def merge(interval1: Interval, interval2: Interval) -> Interval:
-        """Returns a new interval over the minimum of the lower values to the maximum of the upper values."""
-        return Interval(min(interval1.lower, interval2.lower), max(interval1.upper, interval2.upper))
+        """
+        Returns a new interval over the minimum of the lower values to the maximum of
+        the upper values.
+        """
+        return Interval(
+            min(interval1.lower, interval2.lower), max(interval1.upper, interval2.upper)
+        )
 
     @staticmethod
     def overlaps(interval1: Interval, interval2: Interval) -> bool:
@@ -18,24 +23,29 @@ class Interval:
 
     @classmethod
     def sortmerge(cls, intervals: list[Interval]) -> list[Interval]:
-        """Inplace sorts the provided list of `intervals` and merges overlapping intervals."""
+        """
+        Inplace sorts the provided list of `intervals` and merges overlapping intervals.
+        """
         intervals.sort(key=lambda x: x.lower)
         i = 0
         while i < len(intervals) - 1:
-            if cls.overlaps(intervals[i], intervals[i+1]):
-                intervals[i] = cls.merge(intervals[i], intervals[i+1])
-                intervals.pop(i+1)
+            if cls.overlaps(intervals[i], intervals[i + 1]):
+                intervals[i] = cls.merge(intervals[i], intervals[i + 1])
+                intervals.pop(i + 1)
                 i = 0
             else:
                 i += 1
         return intervals
 
     @classmethod
-    def extract(cls, length: int, intervals: list[Interval]) -> npt.NDArray[bool]:
-        """Generates a boolean array with the provided `length` and fills the `intervals` with ``True``."""
+    def extract(cls, length: int, intervals: list[Interval]) -> npt.NDArray[np.bool]:
+        """
+        Generates a boolean array with the provided `length` and fills the `intervals`
+        with `True`.
+        """
         bool_arr = np.zeros(length, dtype=bool)
         for interval in intervals:
-            bool_arr[interval.lower:interval.upper] = True
+            bool_arr[interval.lower : interval.upper] = True
         return bool_arr
 
     def __init__(self, lower: int, upper: int):

@@ -15,11 +15,13 @@ from layers_edx.spectrum.derived_spectrum import DerivedSpectrum
 class FilteredSpectrum(DerivedSpectrum):
     """Creates a filtered spectrum from an unfiltered spectrum."""
 
-    def __init__(self,
-                 source: BaseSpectrum,
-                 fitting_filter: Filter,
-                 element: Element = None,
-                 roi: RegionOfInterest = None):
+    def __init__(
+        self,
+        source: BaseSpectrum,
+        fitting_filter: Filter,
+        element: Element | None = None,
+        roi: RegionOfInterest | None = None,
+    ):
         super().__init__(source)
         self._fitting_filter = fitting_filter
         self._element = element
@@ -33,13 +35,20 @@ class FilteredSpectrum(DerivedSpectrum):
         data = np.copy(self.source.data)
         filtered_data = np.zeros(data.shape)
         error_data = np.zeros(data.shape)
-        if self.roi is None:
+        if self._roi is None:
             data[:lld] = data[lld]
             low_channel = 0
         else:
-            low_channel = self.source.bound(max(lld, self.source.channel_from_energy(FromSI.ev(self.roi.low_energy))))
-            high_channel = self.source.bound(self.source.channel_from_energy(FromSI.ev(self.roi.high_energy)))
-            data = data[low_channel:high_channel+1]
+            low_channel = self.source.bound(
+                max(
+                    lld,
+                    self.source.channel_from_energy(FromSI.ev(self._roi.low_energy)),
+                )
+            )
+            high_channel = self.source.bound(
+                self.source.channel_from_energy(FromSI.ev(self._roi.high_energy))
+            )
+            data = data[low_channel : high_channel + 1]
         filter_array = self.fitting_filter.filter
         half_length = len(filter_array) // 2
         other_length = len(filter_array) - half_length
@@ -49,22 +58,26 @@ class FilteredSpectrum(DerivedSpectrum):
                 total = 0.0
                 error = 0.0
                 for j in range(len(filter_array)):
-                    filter_result = filter_array[j] * data[bound(i - half_length + j, 0, len(data))]
+                    filter_result = (
+                        filter_array[j] * data[bound(i - half_length + j, 0, len(data))]
+                    )
                     total += filter_result
                     error += filter_array[j] * filter_result
                 filtered_data[channel] = self.normalization * total
-                error_data[channel] = self.normalization * math.sqrt(error) if error > 0.0 else np.inf
+                error_data[channel] = (
+                    self.normalization * math.sqrt(error) if error > 0.0 else np.inf
+                )
         self._data = filtered_data
         self._error_data = error_data
         self._non_zero_interval = NonZeroInterval(self._data)
 
     @property
-    def element(self) -> Element:
+    def element(self) -> Element | None:
         """Returns the element associated with this ``FilteredSpectrum``."""
         return self._element
 
     @property
-    def roi(self) -> RegionOfInterest:
+    def roi(self) -> RegionOfInterest | None:
         """The ``RegionOfInterest`` for which the filter is applied on the spectrum."""
         return self._roi
 
@@ -102,5 +115,5 @@ class FilteredSpectrum(DerivedSpectrum):
         """The factor to normalize the spectrum based on its dose."""
         return self._normalization
 
-    def counts(self, i) -> float:
+    def counts(self, i: int) -> float:
         return self.data[i] if i < len(self.data) else 0.0

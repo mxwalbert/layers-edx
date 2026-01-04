@@ -33,4 +33,4 @@ class Parameter(ABC):
         self._kratio = value
 
 
-TParameter = TypeVar('TParameter', bound=Parameter)
+TParameter = TypeVar("TParameter", bound=Parameter)
