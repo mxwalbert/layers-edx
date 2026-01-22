@@ -462,6 +462,8 @@ class XRayTransition:
         for name in family:
             xrt = XRayTransition(element, name)
             if xrt.exists and xrt.energy < min_energy:
+                # xrt transition exists so it can't be None
+                assert xrt.transition is not None
                 min_energy = xrt.energy
                 min_transition = xrt.transition
         return min_transition
@@ -515,7 +517,7 @@ class XRayTransition:
         return hash((self.transition, self.source_shell, self.destination_shell))
 
     @property
-    def transition(self) -> int:
+    def transition(self) -> int | None:
         return self._transition
 
     @property
@@ -536,6 +538,8 @@ class XRayTransition:
 
     @property
     def family(self) -> int:
+        if self.transition is None:
+            raise ValueError("Cannot get family of invalid transition")
         return family_from_transition(self.transition)
 
     @property
@@ -552,12 +556,19 @@ class XRayTransition:
 
     @property
     def exists(self) -> bool:
-        return self.source.exists and self.destination.exists and self.weight() > 0.0
+        return (
+            self.transition is not None
+            and self.source.exists
+            and self.destination.exists
+            and self.weight() > 0.0
+        )
 
     def weight(
         self,
         normalization: WeightNormalization = "default",
     ) -> float:
+        if self.transition is None:
+            raise ValueError("Cannot get family of invalid transition")
         return self.get_weight(self.element, self.transition, normalization)
 
 
