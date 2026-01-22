@@ -51,6 +51,7 @@ Examples:
     cmd = [
         "mvn",
         "-q",
+        "compile",
         "exec:java",
         "-Dexec.mainClass=epq.reference.TestDump",
     ]

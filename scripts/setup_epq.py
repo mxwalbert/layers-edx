@@ -94,6 +94,19 @@ def install_epq_locally(epq_dir: Path) -> bool:
         return False
 
 
+def compile_test_program(test_java_dir: Path) -> bool:
+    """Compile the test program using Maven."""
+    print("\n🔨 Compiling test program...")
+    success, output = run_command(["mvn", "compile"], test_java_dir)
+
+    if success:
+        print("✅ Test program compiled successfully!")
+        return True
+    else:
+        print(f"❌ Test compilation failed:\n{output}")
+        return False
+
+
 def main():
     """Main setup function."""
     print("=" * 70)
@@ -117,8 +130,7 @@ def main():
     if not any(epq_dir.iterdir()):
         print("EPQ submodule directory is empty. Initializing submodule...")
         success, output = run_command(
-            ["git", "submodule", "update", "--init", ".epq-reference"],
-            workspace_dir
+            ["git", "submodule", "update", "--init", ".epq-reference"], workspace_dir
         )
         if not success:
             print(f"❌ Failed to initialize submodule:\n{output}")
@@ -152,6 +164,11 @@ def main():
 
     # Step 4: Install EPQ locally
     if not install_epq_locally(epq_dir):
+        return 1
+
+    # Step 5: Compile test program
+    test_java_dir = workspace_dir / "test" / "java"
+    if not compile_test_program(test_java_dir):
         return 1
 
     print("\n" + "=" * 70)
