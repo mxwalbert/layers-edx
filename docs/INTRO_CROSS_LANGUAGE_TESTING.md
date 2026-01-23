@@ -1,4 +1,4 @@
-# Cross-Language Testing Strategy (Java → Python Port)
+# Intro to the Cross-Language Testing Strategy
 
 This project is a **full Python port** of the Java library [Electron Probe Quantification (EPQ)](https://github.com/usnistgov/EPQ) by NIST.
 
