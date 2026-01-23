@@ -12,7 +12,7 @@ To ensure correctness, the Python implementation is continuously tested against 
 - A small **CLI program** called *TestDump* provides an interface to instantiate Java classes
 - *TestDump* emits **deterministic reference data** per Java class ("dump module")
 - Reference data is emitted as **CSV**, where each data set is framed for easier parsing
-- *TestDump* is run **once per session** using batch execution 
+- *TestDump* is run **once per session** using batch execution
 - Results are cached and reused across tests
 
 ### Test Execution Flow
@@ -72,7 +72,7 @@ pytest -m "epq_ref"
 
 ## Next Steps
 
-- **Setting up**: See [TESTING_ARCHITECTURE.md](TESTING_ARCHITECTURE.md) for principles and design
-- **Java API Reference**: See [JAVA_ORACLE_GUIDE.md](JAVA_ORACLE_GUIDE.md) for `TestDump`, `DumpModule`, `CsvWriter`
+- **Understanding the Architecture**: See [TESTING_ARCHITECTURE.md](TESTING_ARCHITECTURE.md) for principles and design
+- **Java API Reference**: See [JAVA_ORACLE_GUIDE.md](JAVA_ORACLE_GUIDE.md) how the CLI program `TestDump` works
 - **Pytest Integration**: See [PYTEST_BRIDGE_GUIDE.md](PYTEST_BRIDGE_GUIDE.md) for how fixtures and hooks work
-- **How-To Guides**: See [TESTING_RECIPES.md](TESTING_RECIPES.md) to add new dump modules and write tests
+- **How-To Guide**: See [TESTING_RECIPES.md](TESTING_RECIPES.md) to add new dump modules and write tests
