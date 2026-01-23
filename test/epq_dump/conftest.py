@@ -84,7 +84,8 @@ def run_java_oracle_batch(
 @pytest.fixture
 def java_dump(request: pytest.FixtureRequest) -> list[BaseModel]:
     """
-    Retrieve the cached CSV result for the current test as a list of validated Pydantic model instances.
+    Retrieve the cached CSV result for the current test as a list of
+    validated Pydantic model instances.
 
     Uses pytest's StashKey to retrieve the DumpRequest stored during collection phase.
 
@@ -94,7 +95,7 @@ def java_dump(request: pytest.FixtureRequest) -> list[BaseModel]:
         def test_xray(Z: int, trans: int, java_dump: list[XRayTransitionRow]):
             assert len(java_dump) > 0
     """
-    item = cast(pytest.Item, request.node) # type: ignore
+    item = cast(pytest.Item, request.node)  # type: ignore
     req: DumpRequest | None = item.stash.get(dump_request_key, None)
     if req is None:
         pytest.fail("Test marked with java_dump must use @pytest.mark.epq_ref")
