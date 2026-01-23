@@ -1,25 +1,13 @@
 from __future__ import annotations
-from typing import Tuple
-from layers_edx import BASE_PATH
 
-
-def get_physical_constant(
-    name: str, unit: bool = False
-) -> float | Tuple[float, str] | None:
-    with open(f"{BASE_PATH}/resources/CODATA2018.txt") as file:
-        for line in file.readlines():
-            if name == line[: len(name)]:
-                value = float(
-                    line[60:].split("  ")[0].replace("...", "").replace(" ", "")
-                )
-                return (value, line[110:].replace("\n", "")) if unit else value
+from scipy.constants import physical_constants
 
 
 class PhysicalConstants:
-    ElementaryCharge: float = get_physical_constant("elementary charge")
-    AMU: float = get_physical_constant("unified atomic mass unit")
-    BohrRadius: float = get_physical_constant("Bohr radius")
-    ElectronRestMass: float = get_physical_constant("electron mass energy equivalent")
+    ElementaryCharge: float = physical_constants["elementary charge"][0]
+    AMU: float = physical_constants["unified atomic mass unit"][0]
+    BohrRadius: float = physical_constants["Bohr radius"][0]
+    ElectronRestMass: float = physical_constants["electron mass energy equivalent"][0]
 
 
 class ToSI:
