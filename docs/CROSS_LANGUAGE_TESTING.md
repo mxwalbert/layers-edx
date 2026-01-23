@@ -8,15 +8,16 @@ To ensure correctness, the Python implementation is continuously tested against 
 
 ### How it works
 
-- The original Java library is included as a **git submodule**
-- The Java code is **not modified** but compiled and installed via Maven
+- The original Java code is **not modified** only compiled
 - A small **CLI program** called *TestDump* provides an interface to instantiate Java classes
 - *TestDump* emits **deterministic reference data** per Java class ("dump module")
-- Reference data is emitted as **CSV**
-- Pytest runs *TestDump* **once per session** using batch execution
+- Reference data is emitted as **CSV**, where each data set is framed for easier parsing
+- *TestDump* is run **once per session** using batch execution 
 - Results are cached and reused across tests
 
 ### Test Execution Flow
+
+Tests are collected and run with `Pytest`. Tests which need reference data are marked
 
 ```
 pytest
@@ -31,26 +32,24 @@ pytest
 
 ## Directory Layout
 
+The reference library is added as git submodule at .epq-reference/\
+Testfiles for Python and Java CLI Source files are in test/
+
+
 ```
 project-root/
-├── .epq-reference/
-│   └── src/...                 # Java reference library (git submodule)
+├── .epq-reference/             # Java reference library (git submodule)
+│   └── ...
 ├── test/
-│   ├── java/
-│   │   ├── src/main/java/
-│   │   │   └── epq/reference/
-│   │   │       ├── TestDump.java
-│   │   │       ├── DumpElement.java
-│   │   │       ├── DumpXRayTransition.java
-│   │   │       └── ... (other dump modules / helper classes)
-│   │   ├── pom.xml
+│   ├── java/                   # Java side of testing (CLI program)
+│   │   ├── src/main/java/      # Directory structure as expected by Maven
+│   │   │   └── epq/reference/  # Java source files
+│   │   │       └── ...
+│   │   ├── pom.xml             # Project file for Maven
 │   │   └── target/             # build artefacts
-│   └── epq_dump/
-│       ├── conftest.py         # pytest-Java bridge
-│       ├── core_models.py      # Type definitions
-│       ├── csv_parser.py       # Parser for CSV from TestDump
-│       ├── test_*.py           # actual test files
-│       └── validators.py       # Pydantic models to type check CSV
+│   │       └── ...
+│   └── epq_dump/               # Pytest side of testing (Parse CSV output, run tests)
+│       └── ...
 └── ...                         # other project files
 ```
 
