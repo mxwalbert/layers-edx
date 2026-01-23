@@ -1,6 +1,18 @@
 # Java Oracle Guide
 
-This document is a complete reference for the Java components that implement the CLI program wich acts as reference oracle: `TestDump`, `DumpContext`, `CsvWriter`, and `DumpModule`.
+This document is a complete reference for the Java components that implement the CLI program wich acts as reference oracle.
+
+## Overview
+
+All Java reference dumps are accessed via a **single CLI entry point**:
+
+```bash
+mvn exec:java \
+  -Dexec.mainClass=epq.reference.TestDump \
+  -Dexec.args="<command> [args...]"
+```
+
+Each dump module interprets its own arguments, emits exactly one CSV table, and contains no shared domain logic.
 
 ## Environment Setup
 
@@ -17,38 +29,62 @@ python scripts/setup_epq.py
 This script will:
 1. Read the EPQ version from `epq_config.py`
 2. Generate `pom.xml` from `pom.template` with the correct version for EPQ
-3. Update `test/java/pom.xml` with the same version
+3. Update `test/java/pom.xml` with the same version for the CLI program
 4. Compile the EPQ library
 5. Install it to your local Maven repository (~/.m2/repository)
+6. Compile the CLI program
 
-**Note:** The `test/java/pom.xml` file is tracked in git with a `NUMBER_VERSION` placeholder. Local changes can be ignored using `git update-index --skip-worktree`. This allows the setup script to update it with the actual version without affecting git status.
+**Note on test/java/pom.xml**
+
+The `test/java/pom.xml` file is tracked in git with a `NUMBER_VERSION` placeholder. Local changes can be ignored using
+
+```bash
+git update-index --skip-worktree test/java/pom.xml
+```
+
+This allows the setup script to update it with the actual version without affecting git status.
+
+**Note on generated/modified files in submodule**
+
+The script and Java build tooling (Maven, IDEs) will modify and create various project files in `.epq-reference/` which are not in .gitignore:
+
+- `pom.xml` (generated from `pom.template` by setup script)
+- Eclipse project files (`.classpath`, `.project`, `.settings/*`)
+
+Since `.epq-reference/` is a git submodule pointing to the upstream EPQ repository, these local modifications will appear in `git status`. You can safely ignore them. Use git's submodule ignore feature (recommended):
+
+```bash
+git config submodule..epq-reference.ignore dirty
+```
+
+This tells git to ignore untracked and modified files within the submodule. Verify with `git status`.
+
+**VS Code Limitation**
+
+VS Code will still show submodule changes in its Source Control view and badge count. This is a [known limitation since 2020](https://github.com/microsoft/vscode/issues/95822). While you can filter out submodule files in the Source Control panel (they won't be listed individually), the badge number on the Source Control icon will still include them.
+
+Workaround: disable auto-submodule detection in settings
+
+```JSON
+{
+  "git.detectSubmodules": false
+}
+```
 
 ### Prerequisites
 
 - **Java 21 or higher**
 - **Maven 3.6 or higher**
-- **EPQ repository** cloned to `.epq-reference/` directory
+- **EPQ repository** submodule in `.epq-reference/`
 
-If you haven't cloned the EPQ repository yet, run:
-
-```bash
-git clone https://github.com/usnistgov/EPQ.git .epq-reference
-```
-
-Or use the bash script to do everything including cloning:
-
-```bash
-bash scripts/setup_epq.sh
-```
-
-### Configuration
+### Version number
 
 EPQ version management is centralized in `scripts/epq_config.py`. This file stores the EPQ version number as a single source of truth.
 
 To update the EPQ version used throughout the project:
 
 1. Edit `scripts/epq_config.py` and change the `EPQ_VERSION` value
-2. Run `python3 scripts/setup_epq.py` to regenerate pom.xml files and reinstall
+2. Run `python scripts/setup_epq.py` to regenerate pom.xml files and reinstall
 
 This ensures the version is consistent across:
 - `.epq-reference/pom.xml` (EPQ library itself)
@@ -100,7 +136,7 @@ Install Maven from https://maven.apache.org/download.cgi
 Make sure the EPQ repository is cloned to `.epq-reference/`:
 
 ```bash
-git clone https://github.com/usnistgov/EPQ.git .epq-reference
+git submodule update --init
 ```
 
 **Compilation errors:**
@@ -121,7 +157,300 @@ To ignore local changes again:
 git update-index --skip-worktree test/java/pom.xml
 ```
 
+## TestDump
+
+`TestDump` is the **single Java entry point** for all golden-test dumps. Located at `test/java/src/main/java/epq/reference/TestDump.java`.
+
+### Responsibilities
+
+- Acts as a CLI dispatcher
+- Routes requests to the appropriate `DumpModule`
+- Handles single vs batch execution modes
+- Owns all process-exit behavior
+- Prints usage and error messages
+- Emits framing markers in batch mode
+
+### Invocation Modes
+
+#### Single Mode (Human-Facing)
+
+```bash
+mvn exec:java -Dexec.mainClass=epq.reference.TestDump -Dexec.args="XRayTransition Z=26 trans=1"
+```
+
+**Output**: Raw CSV only (no framing markers)
+
+```csv
+Energy,EdgeEnergy,OccupancyNumber
+6403.9,123.4,2
+```
+
+**Use case**: Debugging, manual inspection, shell scripting
+
+#### Batch Mode (Machine-Facing)
+
+```bash
+mvn exec:java -Dexec.mainClass=epq.reference.TestDump -Dexec.args="batch"
+```
+
+**Input**: `stdin`, one request per line
+
+```
+XRayTransition Z=26 trans=1
+EdgeEnergy Z=79
+```
+
+**Output**: Framed CSV blocks (see [TESTING_ARCHITECTURE.md](TESTING_ARCHITECTURE.md) for format)
+
+```
+#BEGIN dump=XRayTransition Z=26 trans=1
+Energy,EdgeEnergy,OccupancyNumber
+6403.9,123.4,2
+#END
+
+#BEGIN dump=Element Z=79
+Energy
+91600.5
+#END
+```
+
+**Use case**: Pytest integration, batch processing
+
+## DumpContext
+
+`DumpContext` represents the **execution context for a single dump invocation**. Located at `test/java/src/main/java/epq/reference/DumpContext.java`.
+
+It is deliberately small and generic. Think of it as a "request container" with argument parsing and CSV output helpers.
+
+### Responsibilities
+
+- Parse `key=value` arguments from the command line
+- Preserve deterministic argument order
+- Provide argument accessors (required and optional)
+- Own CSV output helper CsvWriter
+
+### Argument Parsing
+
+Arguments must be of the form `key=value`.
+
+**Validation**:
+- Arguments must match pattern `key=value`
+- Duplicate keys are rejected
+- Syntax errors result in `IllegalArgumentException`
+
+### Argument Access
+
+```java
+// Required argument - throws if not present
+String z = ctx.get("Z");
+
+// Optional argument with default
+String trans = ctx.getOrDefault("trans", "1");
+
+// Required integer argument
+int z_int = ctx.getInt("Z");
+
+// Required integer argument with range validation
+int z_validated = ctx.getInt("Z", 1, 118);  // min=1, max=118; throws if out of range
+
+// Read-only view of all arguments
+Map<String, String> args = ctx.args();
+```
+
+### CSV Output
+
+`DumpContext` exposes an instance of `CsvWriter` through methods `header()`, `row()` and `flush()`.
+
+## Deterministic CSV Output: Four-Class Design
+
+Four coordinated classes ensure deterministic CSV output: `CsvColumn`, `CsvSchema`, `CsvRowBuilder`, and `CsvWriter`. Located in `test/java/src/main/java/epq/reference/`.
+
+### Architecture Overview
+
+```
+CsvColumn → CsvSchema → CsvRowBuilder → CsvWriter
+```
+
+Each class enforces a specific invariant:
+
+1. **CsvColumn** - Defines column metadata
+2. **CsvSchema** - Immutable column collection with deterministic order
+3. **CsvRowBuilder** - Type-safe, order-enforcing row construction
+4. **CsvWriter** - Serialization and output
+
+### CsvColumn
+
+Immutable record storing metadata for a single column.
+
+**Responsibilities**:
+- Define column name, type, and nullability
+- Enable compile-time type safety in row building
+
+### CsvSchema
+
+Immutable record holding an ordered list of columns.
+
+**Responsibilities**:
+- Enforce fixed column order via immutable `List.copyOf()`
+- Provide deterministic header generation
+- Define the contract for all rows
+
+### CsvRowBuilder
+
+Stateful builder that enforces schema compliance during row construction.
+
+```java
+CsvRowBuilder builder = new CsvRowBuilder(schema);
+builder.set("Z", 26)
+       .set("Energy", 6403.9)
+       .set("OccupancyNumber", 2);
+String[] row = builder.buildRow();  // Order matches schema, not insertion order
+```
+
+**Responsibilities**:
+- Validate column names against schema (throw `IllegalArgumentException` if unknown)
+- Enforce type safety: `set()` accepts `Object`; `buildRow()` serializes by column type
+- Check nullability constraints
+- **Key invariant**: `buildRow()` outputs columns in schema order, not insertion order
+- Serialize values using locale-independent formatting
+
+### CsvWriter
+
+Writes header and rows to output stream.
+
+**Responsibilities**:
+- Write CSV header from schema
+- Write data rows with comma separation
+- Auto-write header before first row if not explicitly written
+- Never quote values (simplifies parsing)
+- Flush output when requested
+
+### Design Invariants
+
+**Determinism is achieved through**:
+1. **Schema-enforced column order**: `CsvSchema` holds immutable, ordered column list
+2. **Order-agnostic row building**: `CsvRowBuilder.buildRow()` outputs columns in schema order, not insertion order
+3. **Locale-independent formatting**: All double values use `Locale.ROOT` and `"%.12e"` format
+4. **Type-safe serialization**: Column type determines serialization method
+5. **No dynamic column definitions**: Schema is fixed before any data is written
+
+
+## DumpModule
+
+`DumpModule` represents **one dumpable unit of reference behavior**. Each module corresponds roughly to one EPQ concept (e.g., `XRayTransition`, `EdgeEnergy`).
+
+Located at `test/java/src/main/java/epq/reference/DumpModule.java` (interface) and implementations like `test/java/src/main/java/epq/reference/XRayTransitionDump.java`.
+
+### Interface
+
+```java
+public interface DumpModule {
+    /// Module command name (e.g., "XRayTransition")
+    String name();
+
+    /// Human-readable usage string
+    String usage();
+
+    /// Return the CSV schema.
+    CsvSchema schema();
+
+    /// Execute the dump, parse arguments, emit CSV
+    /// @throws IllegalArgumentException if arguments are invalid
+    void run(DumpContext ctx) throws IllegalArgumentException;
+}
+```
+
+### Responsibilities
+
+A `DumpModule`:
+
+- Defines its command name
+- Declares its usage string (human-readable, shown on error)
+- Defines the schema for CSV output
+- Parses and validates its own arguments
+- Executes reference logic
+- Emits CSV via `DumpContext.row()` and `DumpContext.flush()`
+
+### Argument Validation Model
+
+Two-tier error handling:
+
+1. **Syntax errors** (argument parsing):
+   - Handled by `DumpContext` in constructor
+   - Throws `IllegalArgumentException` if `key=value` format is malformed
+   - Thrown immediately, before `DumpModule.run()` is called
+
+2. **Semantic errors** (validation):
+   - Handled by `DumpModule.run()`
+   - Throws `IllegalArgumentException` if arguments are valid syntax but invalid values
+   - Caught by `TestDump`, which decides how to surface the error
+
+### Example Error Flow
+
+```java
+// Syntax error: caught before run()
+ctx.get("Z");  // argument doesn't exist → IllegalArgumentException
+
+ctx.getInt("Z"); // argument not convertible to int → IllegalArgumentException
+
+// Semantic error: caught during run()
+trans t = ctx.get("trans");  // valid syntax
+if (z < 1 || z > 118) {
+    throw new IllegalArgumentException("trans out of range");
+}
+```
+
+### Error Propagation
+
+1. `DumpModule.run()` throws `IllegalArgumentException`
+2. `TestDump` catches it
+3. If in single mode, prints module usage and error message
+4. If in batch mode, prints framing marker with error note
+5. Exit code is always 1
+
 ---
+
+## Registering a New DumpModule
+
+To add a new dump module:
+
+1. Create a class implementing `DumpModule` in `test/java/src/main/java/epq/reference/`
+2. Implement `name()`, `usage()`, `schema()` and `run()`
+3. Register it in `TestDump.getDumpModules()`
+
+Example:
+
+```java
+// In TestDump.java
+private static final Map<String, DumpModule> MODULES = Stream.of(
+            new DumpXRayTransition(),
+            new DumpElement()
+            // add more here
+    ).collect(Collectors.toMap(DumpModule::name, m -> m));
+```
+
+## Maven Layout
+
+This project uses the standard Maven layout:
+
+```
+test/java/
+├── src/main/java/
+│   └── epq/reference/
+│       ├── TestDump.java
+│       ├── DumpContext.java
+│       ├── CsvWriter.java
+│       ├── DumpModule.java
+│       └── (implementations)
+├── pom.xml
+└── target/
+```
+
+**Benefits**:
+- Zero custom build configuration
+- Maximum IDE and tooling compatibility
+- Fewer failure modes when invoking Maven from pytest or CI
+- Standard Maven plugins work out of the box
 
 ## Using run_testdump.py
 
@@ -167,354 +496,3 @@ The script:
 4. Runs Maven from the correct working directory
 5. Logs the command and working directory to stderr for debugging
 6. Exits with the same return code as Maven
-
----
-
-## Overview
-
-All Java reference dumps are accessed via a **single CLI entry point**:
-
-```bash
-mvn exec:java \
-  -Dexec.mainClass=epq.reference.TestDump \
-  -Dexec.args="<command> [args...]"
-```
-
-Each dump module interprets its own arguments, emits exactly one CSV table, and contains no shared domain logic.
-
----
-
-## TestDump
-
-`TestDump` is the **single Java entry point** for all golden-test dumps. Located at `test/java/src/main/java/epq/reference/TestDump.java`.
-
-### Responsibilities
-
-- Acts as a CLI dispatcher
-- Routes requests to the appropriate `DumpModule`
-- Handles single vs batch execution modes
-- Owns all process-exit behavior
-- Prints usage and error messages
-- Emits framing markers in batch mode
-
-### Exit Codes
-
-| Code | Meaning |
-|------|---------|
-| 0 | Success |
-| 1 | User error (invalid module name, missing arguments, validation failure) |
-| 2 | Infrastructure error (IO exception, Maven not found) |
-
-### Invocation Modes
-
-#### Single Mode (Human-Facing)
-
-```bash
-mvn exec:java -Dexec.mainClass=epq.reference.TestDump -Dexec.args="XRayTransition Z=26 trans=KA1"
-```
-
-**Output**: Raw CSV only (no framing markers)
-
-```csv
-Energy,EdgeEnergy,OccupancyNumber
-6403.9,123.4,2
-```
-
-**Use case**: Debugging, manual inspection, shell scripting
-
-#### Batch Mode (Machine-Facing)
-
-```bash
-mvn exec:java -Dexec.mainClass=epq.reference.TestDump -Dexec.args="batch"
-```
-
-**Input**: `stdin`, one request per line
-
-```
-XRayTransition Z=26 trans=KA1
-EdgeEnergy Z=79
-```
-
-**Output**: Framed CSV blocks (see [TESTING_ARCHITECTURE.md](TESTING_ARCHITECTURE.md) for format)
-
-```
-#BEGIN dump=XRayTransition Z=26 trans=KA1
-Energy,EdgeEnergy,OccupancyNumber
-6403.9,123.4,2
-#END
-#BEGIN dump=EdgeEnergy Z=79
-Energy
-91600.5
-#END
-```
-
-**Use case**: Pytest integration, batch processing
-
----
-
-## DumpContext
-
-`DumpContext` represents the **execution context for a single dump invocation**. Located at `test/java/src/main/java/epq/reference/DumpContext.java`.
-
-It is deliberately small and generic. Think of it as a "request container" with argument parsing and CSV output helpers.
-
-### Responsibilities
-
-- Parse `key=value` arguments from the command line
-- Preserve deterministic argument order
-- Provide argument accessors (required and optional)
-- Own CSV output helpers
-- Manage CSV flushing
-
-### Argument Parsing
-
-Arguments must be of the form `key=value`:
-
-```
-TestDump XRayTransition Z=26 trans=KA1
-                         ^  ^  ^      ^
-                         key = value (repeated)
-```
-
-**Validation**:
-- Arguments must match pattern `key=value`
-- Duplicate keys are rejected
-- Syntax errors result in `IllegalArgumentException`
-
-### Argument Access
-
-```java
-// Required argument - throws if not present
-String z = ctx.get("Z");
-
-// Optional argument with default
-String trans = ctx.getOrDefault("trans", "KA1");
-
-// Read-only view of all arguments
-Map<String, String> args = ctx.args();
-```
-
-### CSV Output
-
-`DumpContext` exposes an instance of `CsvWriter` via `csv()`:
-
-```java
-CsvWriter csv = ctx.csv();
-csv.header("Z", "Energy", "TransitionName");
-csv.row("26", "6403.9", "KA1");
-csv.row("26", "5889.8", "KA2");
-csv.flush();
-```
-
-**Output**:
-```csv
-Z,Energy,TransitionName
-26,6403.9,KA1
-26,5889.8,KA2
-```
-
----
-
-## CsvWriter
-
-A simple CSV writer utility. Located at `test/java/src/main/java/epq/reference/CsvWriter.java`.
-
-### Responsibilities
-
-- Write deterministic CSV output
-- Enforce fixed column order
-- Apply locale-independent formatting
-
-### Design
-
-- **Fixed column order**: Set at `header()` time; all subsequent `row()` calls must match
-- **Locale.ROOT**: All formatting uses `Locale.ROOT` (no local decimal separators)
-- **Scientific notation**: Floating-point numbers use `"%.12e"` format
-- **No quoting**: Values are never quoted (simplifies parsing)
-
-### API
-
-```java
-CsvWriter csv = new CsvWriter(System.out);  // or any OutputStream
-
-// Set column names
-csv.header("Z", "Energy", "OccupancyNumber");
-
-// Write rows
-csv.row("26", "6403.9", "2");
-csv.row("79", "91600.5", "10");
-
-// Flush output
-csv.flush();
-```
-
-### Scientific Notation Example
-
-```java
-csv.header("Element", "Value");
-csv.row("Iron", String.format(Locale.ROOT, "%.12e", 1.23456789));
-// Output: 1.234567890000e+00
-```
-
----
-
-## DumpModule
-
-`DumpModule` represents **one dumpable unit of reference behavior**. Each module corresponds roughly to one EPQ concept (e.g., `XRayTransition`, `EdgeEnergy`).
-
-Located at `test/java/src/main/java/epq/reference/DumpModule.java` (interface) and implementations like `test/java/src/main/java/epq/reference/XRayTransitionDump.java`.
-
-### Interface
-
-```java
-public interface DumpModule {
-    /// Module command name (e.g., "XRayTransition")
-    String name();
-
-    /// Human-readable usage string
-    String usage();
-
-    /// Execute the dump, parse arguments, emit CSV
-    /// @throws IllegalArgumentException if arguments are invalid
-    void run(DumpContext ctx) throws IllegalArgumentException;
-}
-```
-
-### Responsibilities
-
-A `DumpModule`:
-
-- Defines its command name
-- Declares its usage string (human-readable, shown on error)
-- Parses and validates its own arguments
-- Executes reference logic
-- Emits CSV via `DumpContext.csv()`
-
-### Example: Simple XRayTransitionDump
-
-```java
-public class XRayTransitionDump implements DumpModule {
-    @Override
-    public String name() {
-        return "XRayTransition";
-    }
-
-    @Override
-    public String usage() {
-        return "XRayTransition Z=<element> trans=<transition>";
-    }
-
-    @Override
-    public void run(DumpContext ctx) throws IllegalArgumentException {
-        // Parse arguments
-        int z = Integer.parseInt(ctx.get("Z"));
-        String transition = ctx.get("trans");
-
-        // Validate
-        if (z < 1 || z > 118) {
-            throw new IllegalArgumentException("Z must be 1-118");
-        }
-
-        // Fetch reference data
-        XRaySet transitions = EPQ.getXRayTransitions(z);
-        XRayTransition xrt = transitions.getTransition(transition);
-        if (xrt == null) {
-            throw new IllegalArgumentException("Unknown transition: " + transition);
-        }
-
-        // Emit CSV
-        CsvWriter csv = ctx.csv();
-        csv.header("Energy", "Intensity", "Name");
-        csv.row(
-            String.format(Locale.ROOT, "%.12e", xrt.getEnergy()),
-            String.format(Locale.ROOT, "%.12e", xrt.getWeight()),
-            xrt.toString()
-        );
-        csv.flush();
-    }
-}
-```
-
-### Argument Validation Model
-
-Two-tier error handling:
-
-1. **Syntax errors** (argument parsing):
-   - Handled by `DumpContext` in constructor
-   - Throws `IllegalArgumentException` if `key=value` format is malformed
-   - Thrown immediately, before `DumpModule.run()` is called
-
-2. **Semantic errors** (validation):
-   - Handled by `DumpModule.run()`
-   - Throws `IllegalArgumentException` if arguments are valid syntax but invalid values
-   - Caught by `TestDump`, which decides how to surface the error
-
-### Example Error Flow
-
-```java
-// Syntax error: caught before run()
-ctx.get("Z");  // argument doesn't exist → IllegalArgumentException
-
-// Semantic error: caught during run()
-int z = Integer.parseInt(ctx.get("Z"));  // valid syntax
-if (z < 1 || z > 118) {
-    throw new IllegalArgumentException("Z out of range");
-}
-```
-
-### Error Propagation
-
-1. `DumpModule.run()` throws `IllegalArgumentException`
-2. `TestDump` catches it
-3. If in single mode, prints module usage and error message
-4. If in batch mode, prints framing marker with error note
-5. Exit code is always 1
-
----
-
-## Registering a New DumpModule
-
-To add a new dump module:
-
-1. Create a class implementing `DumpModule` in `test/java/src/main/java/epq/reference/`
-2. Implement `name()`, `usage()`, and `run()`
-3. Register it in `TestDump.getDumpModules()`
-
-Example:
-
-```java
-// In TestDump.java
-private static Map<String, DumpModule> getDumpModules() {
-    return Map.ofEntries(
-        Map.entry("XRayTransition", new XRayTransitionDump()),
-        Map.entry("EdgeEnergy", new EdgeEnergyDump()),
-        Map.entry("Element", new ElementDump()),  // NEW
-        // ...
-    );
-}
-```
-
----
-
-## Maven Layout
-
-This project uses the standard Maven layout:
-
-```
-test/java/
-├── src/main/java/
-│   └── epq/reference/
-│       ├── TestDump.java
-│       ├── DumpContext.java
-│       ├── CsvWriter.java
-│       ├── DumpModule.java
-│       └── (implementations)
-├── pom.xml
-└── build/classes/
-```
-
-**Benefits**:
-- Zero custom build configuration
-- Maximum IDE and tooling compatibility
-- Fewer failure modes when invoking Maven from pytest or CI
-- Standard Maven plugins work out of the box
