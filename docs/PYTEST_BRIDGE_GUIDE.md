@@ -11,7 +11,6 @@ The pytest-Java bridge operates in two main parts:
 
 Located in `test/epq_dump/conftest.py`.
 
----
 
 ## Core Components
 
@@ -19,24 +18,31 @@ Located in `test/epq_dump/conftest.py`.
 
 Defines the communication contract between pytest and Java.
 
+#### DumpArgs
+
+Type alias for dump arguments
+
+```python
+DumpArgs = Tuple[Tuple[str, str], ...] # e.g., (("Z", "26"), ("trans", "1"))
+```
+
 #### DumpRequest
 
-A frozen dataclass that represents a request to Java:
+A frozen dataclass that represents a request to Java
 
 ```python
 @dataclass(frozen=True)
 class DumpRequest:
-    module: str              # e.g., "XRayTransition"
-    args: tuple[tuple[str, str], ...]  # e.g., (("Z", "26"), ("trans", "1"))
+    module: str            # e.g., "XRayTransition"
+    args: DumpArgs
+
+    def __post_init__(self):
+        """Sort arguments by key name so ('Z','26') vs ('trans','1')
+        always results in the same hash regardless of order in parametrize."""
 
     def to_batch_line(self) -> str:
         """Convert to batch mode format (sent to Java stdin)."""
-        # e.g., "XRayTransition Z=26 trans=KA1"
-        args_str = " ".join(f"{k}={v}" for k, v in sorted(self.args))
-        return f"{self.module} {args_str}".strip()
 ```
-
-#### Canonicalization
 
 Arguments are automatically sorted by key name:
 
@@ -47,11 +53,18 @@ req2 = DumpRequest("XRayTransition", args=(("trans", "1"), ("Z", "26")))
 
 assert hash(req1) == hash(req2)
 assert req1.to_batch_line() == req2.to_batch_line()
-# Output: "XRayTransition Z=26 trans=KA1"
+# Output: "XRayTransition Z=26 trans=1"
 ```
 
 **Benefit**: Tests with different argument orders hit the same cache entry.
 
+#### CsvTable
+
+Type alias for a csv table
+
+```python
+CsvTable = List[Dict[str, str]]
+```
 
 ## conftest.py
 
@@ -100,13 +113,13 @@ The collection hook extracts `DumpRequest` objects from test markers inline (not
 # Example test:
 @pytest.mark.epq_ref(module="XRayTransition")
 @pytest.mark.parametrize("Z, trans", [(26, "1"), (79, "10")])
-def test_xray(Z: int, trans: str, java_dump):
+def test_xray(Z: int, trans: int, java_dump):
     ...
 
 # Generates these DumpRequests:
 [
-    DumpRequest("XRayTransition", args=(("Z", "26"), ("trans", "KA1"))),
-    DumpRequest("XRayTransition", args=(("Z", "79"), ("trans", "LA1"))),
+    DumpRequest("XRayTransition", args=(("Z", "26"), ("trans", "1"))),
+    DumpRequest("XRayTransition", args=(("Z", "79"), ("trans", "10"))),
 ]
 ```
 
@@ -117,33 +130,45 @@ def test_xray(Z: int, trans: str, java_dump):
 4. Convert parameters to strings (matching Java `key=value` format)
 5. Create a `DumpRequest` for each combination
 
-### Java Invocation
+### Java Invocation: run_java_oracle_batch
 
 ```python
-def java_batch(requests: set[DumpRequest]) -> dict[DumpRequest, FramedCsvTable]:
-    """
-    Launch Java process once with all requests.
-    Return cache of results as FramedCsvTable (list of dicts).
-    """
-    batch_input = "\n".join(r.to_batch_line() for r in sorted(requests))
+def run_java_oracle_batch(
+    requests: Iterable[DumpRequest],
+) -> dict[DumpRequest, CsvTable]:
+    """Feeds all requests into Java via stdin and parses the result."""
+    batch_input = "\n".join(r.to_batch_line() for r in requests) + "\n"
+
+    java_project_root = (Path(__file__).parent.parent / "java").resolve()
 
     result = subprocess.run(
         [
-            "mvn", "exec:java",
+            "mvn",
+            "-q",
+            "exec:java",
             "-Dexec.mainClass=epq.reference.TestDump",
-            "-Dexec.args=batch"
+            "-Dexec.args=batch",
         ],
+        cwd=java_project_root,
         input=batch_input,
         text=True,
         capture_output=True,
-        cwd="test/java"
     )
 
     if result.returncode != 0:
-        raise RuntimeError(f"Java process failed:\n{result.stderr}")
+        raise RuntimeError(f"Java Oracle Failed:\n{result.stderr}")
 
-    return dict(parse_request_table(result.stdout))
+    return dict(parse_epq_batch_output(result.stdout))
 ```
+
+**Responsibilities**:
+- Format all `DumpRequest` objects as batch input (one per line)
+- Locate the Java project root directory
+- Invoke Maven with batch mode and capture output
+- Parse framed CSV output into a dictionary of results
+- Raise `RuntimeError` if the Java process fails
+
+**Called from**: `pytest_collection_modifyitems` during test collection
 
 ### CSV Frame Parsing
 
@@ -153,22 +178,21 @@ def parse_request_table(stdout: str) -> Iterator[tuple[DumpRequest, FramedCsvTab
     Parse Java's framed CSV output.
 
     Input format:
-        #BEGIN dump=XRayTransition Z=26 trans=KA1
+        #BEGIN dump=XRayTransition Z=26 trans=1
         Energy,Intensity,Name
-        6403.9,1.0,KA1
-        5889.8,0.5,KA2
+        6403.9,1.0,1
         #END
-        #BEGIN dump=EdgeEnergy Z=79
+
+        #BEGIN dump=Element Z=79
         Energy
         91600.5
         #END
 
     Yields:
-        (DumpRequest("XRayTransition", args=(("Z", "26"), ("trans", "KA1"))), [
+        (DumpRequest("XRayTransition", args=(("Z", "26"), ("trans", "1"))), [
             {"Energy": "6403.9", "Intensity": "1.0", "Name": "KA1"},
-            {"Energy": "5889.8", "Intensity": "0.5", "Name": "KA2"},
         ])
-        (DumpRequest("EdgeEnergy", args=(("Z", "79"),)), [
+        (DumpRequest("Element", args=(("Z", "79"),)), [
             {"Energy": "91600.5"},
         ])
     """
@@ -176,49 +200,19 @@ def parse_request_table(stdout: str) -> Iterator[tuple[DumpRequest, FramedCsvTab
 
 **Logic**:
 1. Split output on `#BEGIN` and `#END` markers
-2. Extract request line: `dump=XRayTransition Z=26 trans=KA1`
+2. Extract request line: `dump=XRayTransition Z=26 trans=1`
 3. Parse CSV lines until next `#END`
 4. Reconstruct `DumpRequest` from request line
 5. Parse CSV into list of dictionaries (intermediate format)
 6. Cache under `DumpRequest` key (validation happens later in the fixture)
 
----
 
 ## java_dump Fixture
 
-```python
-@pytest.fixture(scope="function")
-def java_dump(request) -> list[BaseModel]:
-    """
-    Retrieve the cached CSV result for the current test as a list of validated Pydantic model instances.
+Retrieve the cached CSV result for the current test as a list of validated Pydantic model instances.
 
-    Uses pytest's StashKey to retrieve the DumpRequest stored during collection phase.
+Uses pytest's StashKey to retrieve the DumpRequest stored during collection phase.
 
-    Usage:
-        @pytest.mark.epq_ref(module="XRayTransition")
-        @pytest.mark.parametrize("Z, trans", [(26, "KA1")])
-        def test_xray(Z: int, trans: str, java_dump: list[XRayTransitionRow]):
-            assert len(java_dump) > 0
-    """
-    # Extract marker
-    marker = request.node.get_closest_marker("epq_ref")
-    if not marker:
-        raise ValueError("java_dump fixture requires @pytest.mark.epq_ref")
-
-    module = marker.kwargs["module"]
-
-    # Extract parametrize values
-    params = request.node.callspec.params  # e.g., {"Z": 26, "trans": "KA1"}
-
-    # Build DumpRequest with string values
-    args_tuple = tuple((k, str(v)) for k, v in sorted(params.items()))
-    dump_request = DumpRequest(module, args=args_tuple)
-
-    # Retrieve from cache (returns validated Pydantic models)
-    if dump_request not in JAVA_ORACLE_DATA:
-        raise KeyError(f"No cached result for {dump_request}")
-
-    return JAVA_ORACLE_DATA[dump_request]
 
 ## Pydantic Schema Validation
 
@@ -245,8 +239,8 @@ import pytest
 from test.epq_dump.validators import XRayTransitionRow
 
 @pytest.mark.epq_ref(module="XRayTransition")
-@pytest.mark.parametrize("Z, trans", [(26, "KA1"), (79, "LA1")])
-def test_xray_transition_schema(Z: int, trans: str, java_dump: list[XRayTransitionRow]):
+@pytest.mark.parametrize("Z, trans", [(26, "1"), (79, "10")])
+def test_xray_transition_schema(Z: int, trans: int, java_dump: list[XRayTransitionRow]):
     assert len(java_dump) > 0
 
     # Access validated model attributes directly
@@ -261,7 +255,6 @@ def test_xray_transition_schema(Z: int, trans: str, java_dump: list[XRayTransiti
 - If test lacks `@pytest.mark.epq_ref`, raises `ValueError`
 - If request not in cache, raises `KeyError` (indicates collector bug)
 
----
 
 ## Usage Examples
 
@@ -318,9 +311,9 @@ pytest test/python/test_xray.py::test_xray_energies
 ```python
 @pytest.mark.epq_ref(module="XRayTransition")
 @pytest.mark.parametrize("Z", [26, 79])
-@pytest.mark.parametrize("trans", ["KA1", "LA1"])
+@pytest.mark.parametrize("trans", ["10", "11"])
 @pytest.mark.parametrize("shell", ["K", "L"])
-def test_combinations(Z: int, trans: str, shell: str, java_dump: list[XRayTransitionRow]):
+def test_combinations(Z: int, trans: int, shell: str, java_dump: list[XRayTransitionRow]):
     """
     Generates 2 * 2 * 2 = 8 test cases.
     Java is invoked once with 8 DumpRequests.
