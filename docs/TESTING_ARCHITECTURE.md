@@ -11,7 +11,7 @@ The approach treats Java as the authoritative reference. Python tests verify tha
 - **Correctness by construction**: Any discrepancy is caught immediately
 - **Confidence during refactoring**: Behavioral changes are visible
 - **Language-agnostic validation**: Porting errors are detected, not implementation bugs
-- **Single JVM invocation**: Batch execution minimizes startup cost
+
 
 ### Determinism and Reproducibility
 
@@ -43,7 +43,7 @@ This ensures that the same test produces identical results across runs, making d
 **When**: Before any tests execute
 
 **What happens**:
-1. Pytest launches ClI program *Testdump*
+1. Pytest launches CLI program *Testdump*
 2. All collected `DumpRequest` objects are converted to **batch mode** format (one request per line)
 3. Requests are written to `stdin` of the Java process
 4. The Java process parses each request, dispatches to the appropriate `DumpModule`, and emits *framed* CSV output
@@ -57,17 +57,29 @@ This ensures that the same test produces identical results across runs, making d
 **What happens**:
 1. Each test function receives the `java_dump` fixture
 2. The fixture retrieves the pre-computed CSV results from the global cache
-3. The test verifies its specific assertions against the reference data
+3. CSV rows are validated against **Pydantic models** (e.g., `XRayTransitionRow`, `ElementRow`) to ensure correct types and schema compliance
+4. The test verifies its specific assertions against the reference data
 
 **Why**: Tests run fast because all JVM interactions are batched and cached.
 
-## Canonicalization and Deduplication
+## Batching and JVM Startup Optimization
+
+### Minimizing JVM Costs
+
+Starting the JVM is expensive (typically 1-2 seconds). To avoid this overhead:
+
+1. **Single JVM instance**: All requests are sent to one Java process
+2. **Batch mode**: Requests are collected during pytest collection phase
+3. **Deduplication**: Identical requests are cached and reused
+
+### Canonicalization and Deduplication
 
 `DumpRequest` automatically sorts arguments by key name. This ensures:
 - `(Z=26, trans=1)` and `(trans=1, Z=26)` map to the same request
 - Only one Java call is made for both cases
 - Requests are deterministic and cacheable
 
+This deduplication means that 1000 test cases might only need 50-100 unique Java calls, dramatically reducing total execution time.
 
 ## CSV as the Wire Format
 
@@ -75,8 +87,7 @@ This ensures that the same test produces identical results across runs, making d
 
 CSV is the contract between Java and Python. It was chosen because:
 
-- **Stable**: Schema is explicit
-- **Diff-friendly**: Human-readable, easy to review changes
+- **Stable**: Schema is made explicit
 - **Human-readable**: Can be inspected manually for debugging
 - **Easy to parse**: Python has robust CSVReader()
 
@@ -95,6 +106,82 @@ Z,Energy,TransitionName
 26,6403.9,KA1
 26,5889.8,KA2
 79,91600.5,LA1
+```
+
+### Schema Validation
+
+The CSV schema is enforced on both sides:
+
+**Java side (emission)**:
+- Each `DumpModule` defines its output schema using `CsvSchema`, `CsvColumn`, and `CsvRowBuilder`
+- Schema declares column names, types, and order
+- `CsvRowBuilder` enforces type-safe row construction
+- Column order is fixed and deterministic
+- Type formatting is consistent (e.g., floats always use scientific notation)
+
+**Python side (validation)**:
+- Pydantic models (e.g., `XRayTransitionRow`, `ElementRow`) define expected schema
+- Each CSV row is parsed and validated against its corresponding model
+- Type mismatches, missing fields, or unexpected columns raise validation errors
+- This ensures Java and Python stay synchronized
+
+See individual test files for module-specific Pydantic models.
+
+## Batch Mode Protocol
+
+This section specifies the technical protocol for how Python communicates with the Java TestDump program. In batch mode, multiple requests are sent to a single Java process via stdin, and responses are returned as framed CSV blocks on stdout.
+
+### Protocol Overview
+
+- **Transport**: stdin/stdout pipes
+- **Input format**: One request per line (text)
+- **Output format**: Framed CSV blocks with `#BEGIN`/`#END` markers
+- **Execution**: Single JVM instance handles all requests sequentially
+
+### Input Format (stdin)
+
+One request per line:
+
+```
+<module-name> [key=value] ...
+```
+
+Example:
+```
+XRayTransition Z=26 trans=1
+XRayTransition Z=79 trans=2
+Element Z=6
+```
+
+### Output Format (stdout)
+
+Each response is framed with markers:
+
+```
+#BEGIN dump=<request-line>
+<csv-header>
+<csv-row-1>
+<csv-row-2>
+...
+#END
+
+#BEGIN dump=<next-request-line>
+...
+```
+
+### Frame Parsing
+
+Python parses frames by:
+1. Reading lines until `#BEGIN dump=...` is found
+2. Extracting the request (after `dump=`)
+3. Collecting CSV lines until `#END` is found
+4. Parsing CSV lines into a list of dictionaries
+5. Caching the result keyed by `DumpRequest`
+
+### Invocation Command
+
+```bash
+mvn exec:java -Dexec.mainClass=epq.reference.TestDump -Dexec.args="batch"
 ```
 
 ## Error Handling and Propagation
@@ -134,59 +221,9 @@ For user errors, no Java exception stack trace is emitted. The error message is 
 
 For infrastructure errors (e.g., Maven not found, IO exceptions), stderr will contain the actual Java exception.
 
-## Batch Mode Protocol
-
-### Command
-
-```bash
-mvn exec:java -Dexec.mainClass=epq.reference.TestDump -Dexec.args="batch"
-```
-
-### Input (stdin)
-
-One request per line. Each request has the format:
-
-```
-<module-name> [key=value] [key=value] ...
-```
-
-Example:
-```
-XRayTransition Z=26 trans=1
-XRayTransition Z=79 trans=2
-Element Z=6
-```
-
-### Output (stdout)
-
-Requests are framed with markers:
-
-```
-#BEGIN dump=<request-line>
-<csv-header>
-<csv-row-1>
-<csv-row-2>
-...
-#END
-
-#BEGIN dump=<next-request-line>
-...
-```
-
-### Frame Parsing
-
-Python parses frames by:
-1. Reading lines until `#BEGIN dump=...` is found
-2. Extracting the request (after `dump=`)
-3. Collecting CSV lines until `#END` is found
-4. Parsing CSV lines into a list of dictionaries
-5. Caching the result keyed by `DumpRequest`
-
----
 
 ## Future Extensions
 
 - **Configuration**: Per-module allowed-argument validation
-- **Type safety**: Typed getters in `DumpContext` (`getInt()`, `getDouble()`)
 - **Output formats**: JSON or metadata support
 - **Performance**: Optional caching to disk between test runs
