@@ -83,9 +83,16 @@ def run_java_oracle_batch(
 
 @pytest.fixture
 def java_dump(request: pytest.FixtureRequest) -> list[BaseModel]:
-    """Fixture that tests use to get their data.
+    """
+    Retrieve the cached CSV result for the current test as a list of validated Pydantic model instances.
 
-    Automatically validates the DataFrame against the schema for the dump module.
+    Uses pytest's StashKey to retrieve the DumpRequest stored during collection phase.
+
+    Usage:
+        @pytest.mark.epq_ref(module="XRayTransition")
+        @pytest.mark.parametrize("Z, trans", [(26, "1")])
+        def test_xray(Z: int, trans: int, java_dump: list[XRayTransitionRow]):
+            assert len(java_dump) > 0
     """
     item = cast(pytest.Item, request.node) # type: ignore
     req: DumpRequest | None = item.stash.get(dump_request_key, None)
