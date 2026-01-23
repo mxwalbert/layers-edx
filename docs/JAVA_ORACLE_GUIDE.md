@@ -63,11 +63,13 @@ This tells git to ignore untracked and modified files within the submodule. Veri
 
 VS Code will still show submodule changes in its Source Control view and badge count. This is a [known limitation since 2020](https://github.com/microsoft/vscode/issues/95822). While you can filter out submodule files in the Source Control panel (they won't be listed individually), the badge number on the Source Control icon will still include them.
 
-Workaround: disable auto-submodule detection in settings
+Workaround: disable auto-submodule detection and auto repository detection in settings. However this disables tracking of all submodules
 
 ```JSON
 {
-  "git.detectSubmodules": false
+  "git.detectSubmodules": false,
+  "git.autoRepositoryDetection": "openEditors",
+
 }
 ```
 
