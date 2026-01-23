@@ -21,10 +21,20 @@ Create a new file: `test/java/src/main/java/epq/reference/ElementDump.java`
 ```java
 package epq.reference;
 
-import gov.nist.microanalysis.EPQLibrary.Element;
-import java.util.Locale;
+import static epq.reference.CsvColumn.Type.*;
 
-public class ElementDump implements DumpModule {
+import gov.nist.microanalysis.EPQLibrary.Element;
+
+public final class ElementDump implements DumpModule {
+
+    // 1. Define the CSV schema
+    static final CsvSchema SCHEMA = new CsvSchema(
+        new CsvColumn("Z", INT, false),
+        new CsvColumn("symbol", STRING, false),
+        new CsvColumn("name", STRING, false),
+        new CsvColumn("atomic_weight", DOUBLE, false)
+    );
+
     @Override
     public String name() {
         return "Element";
@@ -36,50 +46,46 @@ public class ElementDump implements DumpModule {
     }
 
     @Override
-    public void run(DumpContext ctx) throws IllegalArgumentException {
-        // 1. Parse arguments
-        String zStr = ctx.get("Z");
-        int z;
-        try {
-            z = Integer.parseInt(zStr);
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Z must be an integer, got: " + zStr);
-        }
+    public CsvSchema schema() {
+        return SCHEMA;
+    }
 
-        // 2. Validate arguments
-        if (z < 1 || z > 118) {
-            throw new IllegalArgumentException("Z must be in range [1, 118], got: " + z);
-        }
+    @Override
+    public void run(DumpContext ctx) throws IllegalArgumentException {
+        // 2. Parse and validate arguments
+        final int Z = ctx.getInt("Z", 1, 118);
 
         // 3. Fetch reference data
-        Element element = Element.byAtomicNumber(z);
-        if (element == null) {
-            throw new IllegalArgumentException("Unknown element Z=" + z);
-        }
+        final Element element = Element.byAtomicNumber(Z);
 
-        // 4. Emit CSV
-        CsvWriter csv = ctx.csv();
-        csv.header("AtomicNumber", "Name", "Symbol", "AtomicMass");
-        csv.row(
-            String.valueOf(z),
-            element.getName(),
-            element.toAbbrev(),
-            String.format(Locale.ROOT, "%.12e", element.getAtomicMass())
-        );
-        csv.flush();
+        // 4. Build and emit CSV row
+        CsvRowBuilder rowBuilder = new CsvRowBuilder(SCHEMA);
+        rowBuilder
+            .set("Z", Z)
+            .set("symbol", element.toAbbrev())
+            .set("name", element.toString())
+            .set("atomic_weight", element.getAtomicWeight());
+
+        ctx.row(rowBuilder.buildRow());
+        ctx.flush();
     }
 }
 ```
 
 **Key points**:
 - Extend `DumpModule` interface
+- Define a `CsvSchema` with `CsvColumn` entries:
+  - Column name (lowercase with underscores)
+  - Column type (`INT`, `DOUBLE`, `STRING`, `BOOLEAN`)
+  - Whether the column is nullable (`true` for optional, `false` for required)
 - Implement `name()`: command name for CLI (e.g., "Element")
 - Implement `usage()`: human-readable help string
+- Implement `schema()`: returns the CSV schema
 - Implement `run()`: the logic
-  - Parse and validate all arguments
-  - Throw `IllegalArgumentException` on any error
-  - Emit CSV using `ctx.csv()`
-  - Call `csv.flush()`
+  - Parse and validate arguments using `ctx.getInt()`, `ctx.getString()`, etc.
+  - Use `CsvRowBuilder` to construct rows type-safely
+  - Call `ctx.row()` to emit the row
+  - Call `ctx.flush()` at the end
 
 #### 2. Register the Module in TestDump
 
@@ -116,8 +122,8 @@ mvn exec:java \
 
 Expected output:
 ```csv
-AtomicNumber,Name,Symbol,AtomicMass
-26,Iron,Fe,5.587000000000e+01
+Z,symbol,name,atomic_weight
+26,Fe,Iron,55.845
 ```
 
 If it fails:
@@ -138,55 +144,68 @@ mvn exec:java \
 Expected output:
 ```
 #BEGIN dump=Element Z=26
-AtomicNumber,Name,Symbol,AtomicMass
-26,Iron,Fe,5.587000000000e+01
+Z,symbol,name,atomic_weight
+26,Fe,Iron,55.845
 #END
 #BEGIN dump=Element Z=79
-AtomicNumber,Name,Symbol,AtomicMass
-79,Gold,Au,1.969700000000e+02
+Z,symbol,name,atomic_weight
+79,Au,Gold,196.966569
 #END
-```
-
-#### 6. Commit
-
-```bash
-git add test/java/src/main/java/epq/reference/ElementDump.java
-git commit -m "Add Element dump module"
 ```
 
 ### Common Mistakes
 
-**Mistake**: Arguments not sorted in CSV output
+**Mistake**: Schema column order doesn't match usage
 ```java
-// WRONG - Z appears after Name
-csv.header("Name", "Z", "Symbol");
+// WRONG - columns defined in one order, set in another
+static final CsvSchema SCHEMA = new CsvSchema(
+    new CsvColumn("name", STRING, false),
+    new CsvColumn("Z", INT, false)
+);
+// ... later in run():
+rowBuilder.set("Z", Z).set("name", element.toString());  // OK but confusing
 
-// RIGHT - columns in desired order
-csv.header("Z", "Name", "Symbol");
+// RIGHT - define columns in logical order (Z first)
+static final CsvSchema SCHEMA = new CsvSchema(
+    new CsvColumn("Z", INT, false),
+    new CsvColumn("name", STRING, false)
+);
 ```
 
-**Mistake**: Float formatting inconsistent
+**Mistake**: Wrong nullable flag
 ```java
-// WRONG - uses default locale
-double mass = element.getAtomicMass();
-csv.row(String.valueOf(mass));  // May use comma as decimal separator!
+// WRONG - marking required data as nullable
+new CsvColumn("Z", INT, true)  // Z is always present!
 
-// RIGHT - uses Locale.ROOT
-String formatted = String.format(Locale.ROOT, "%.12e", mass);
-csv.row(formatted);
+// WRONG - marking optional data as non-nullable
+new CsvColumn("ionization_energy", DOUBLE, false)  // May not exist for all elements!
+
+// RIGHT - match nullability to data availability
+new CsvColumn("Z", INT, false)  // Always present
+new CsvColumn("ionization_energy", DOUBLE, true)  // Optional
 ```
 
-**Mistake**: Not validating arguments
+**Mistake**: Not using typed setters
 ```java
-// WRONG - will throw NullPointerException if Z is missing
-int z = Integer.parseInt(ctx.get("Z"));
+// WRONG - setting values as strings when schema expects INT
+rowBuilder.set("Z", String.valueOf(z));  // Runtime error!
 
-// RIGHT - catch all errors and throw IllegalArgumentException
-try {
-    int z = Integer.parseInt(ctx.get("Z"));
-} catch (NumberFormatException e) {
-    throw new IllegalArgumentException("Z must be an integer");
+// RIGHT - use values matching the schema type
+rowBuilder.set("Z", z);  // INT in schema, int value
+rowBuilder.set("atomic_weight", element.getAtomicWeight());  // DOUBLE
+```
+
+**Mistake**: Manual argument validation when helper methods exist
+```java
+// WRONG - manual parsing and validation
+String zStr = ctx.get("Z");
+int z = Integer.parseInt(zStr);
+if (z < 1 || z > 118) {
+    throw new IllegalArgumentException("Z out of range");
 }
+
+// RIGHT - use ctx.getInt() with range validation
+final int Z = ctx.getInt("Z", 1, 118);
 ```
 
 ---
@@ -376,7 +395,6 @@ def test_element_mass(Z: int, java_dump: list[ElementRow]):
 All three tests will:
 - Share the same Java invocation (batch mode)
 - Reuse cached results (no extra JVM startup)
-- Run in parallel (pytest can parallelize parametrized tests)
 
 #### 6. Class-Based Tests (Recommended for Multiple Related Tests)
 
