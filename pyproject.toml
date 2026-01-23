@@ -26,6 +26,7 @@ dev = [
     "pytest-cov",
     "ruff",
     "scipy-stubs",
+    "pydantic",
 ]
 
 [project.urls]
@@ -38,6 +39,12 @@ packages = ["layers_edx"]
 [tool.pytest.ini_options]
 # Skip EPQ tests by default
 addopts = "-m 'not epq and not epq_env'"
+# Exclude java directories
+norecursedirs = [
+    ".epq-reference",
+    "target",
+    "build",
+]
 
 [tool.ruff]
 # Exclude a variety of commonly ignored directories.
@@ -68,6 +75,7 @@ exclude = [
     "node_modules",
     "site-packages",
     "venv",
+    ".epq-reference",
 ]
 
 # Same as Black.

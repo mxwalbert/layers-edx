@@ -1,0 +1,62 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="
+           http://maven.apache.org/POM/4.0.0
+           http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <!-- This is NOT EPQ itself -->
+  <groupId>epq.port</groupId>
+  <artifactId>epq-test-dumps</artifactId>
+  <version>0.1.0</version>
+  <packaging>jar</packaging>
+
+  <name>EPQ Java Reference Test Dumps</name>
+  <description>
+    Small Java utilities that dump reference data from the EPQ library
+    for cross-language testing of the Python port.
+  </description>
+
+  <!-- Java version must match EPQ -->
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.release>21</maven.compiler.release>
+  </properties>
+
+  <dependencies>
+    <!-- EPQ reference implementation (installed locally via mvn install) -->
+    <dependency>
+      <groupId>gov.nist.microanalysis</groupId>
+      <artifactId>epq</artifactId>
+      <version>15.1.43</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+
+      <!-- Java compiler -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.11.0</version>
+        <configuration>
+          <release>21</release>
+        </configuration>
+      </plugin>
+
+      <!-- Make it easy to run TestDump from Maven -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.1.1</version>
+        <configuration>
+          <mainClass>epq.reference.TestDump</mainClass>
+        </configuration>
+      </plugin>
+
+    </plugins>
+  </build>
+
+</project>
