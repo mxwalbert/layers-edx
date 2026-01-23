@@ -1,4 +1,4 @@
-from typing import Iterable, cast, Any
+from typing import Iterable, cast
 import pytest
 from pytest import StashKey
 import subprocess
@@ -82,12 +82,12 @@ def run_java_oracle_batch(
 
 
 @pytest.fixture
-def java_dump(request: Any) -> list[BaseModel]:
+def java_dump(request: pytest.FixtureRequest) -> list[BaseModel]:
     """Fixture that tests use to get their data.
 
     Automatically validates the DataFrame against the schema for the dump module.
     """
-    item = cast(pytest.Item, request.node)
+    item = cast(pytest.Item, request.node) # type: ignore
     req: DumpRequest | None = item.stash.get(dump_request_key, None)
     if req is None:
         pytest.fail("Test marked with java_dump must use @pytest.mark.epq_ref")
