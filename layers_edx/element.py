@@ -141,6 +141,7 @@ class Element:
         v[0]
         for v in read_csv(
             "IonizationEnergies",
+            row_offset=2,
             value_offset=1,
             conversion=ToSI.ev,
             fill_value=float("nan"),
