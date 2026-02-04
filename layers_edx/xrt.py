@@ -462,7 +462,7 @@ class XRayTransition:
         for name in family:
             xrt = XRayTransition(element, name)
             if xrt.exists and xrt.energy < min_energy:
-                # xrt transition exists so it can't be None
+                # to silence type checker: xrt.exists guarantees transition is not None
                 assert xrt.transition is not None
                 min_energy = xrt.energy
                 min_transition = xrt.transition
