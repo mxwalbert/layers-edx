@@ -493,9 +493,6 @@ class XRayTransition:
             )
         elif source is not None and destination is not None:
             transition = transition_from_shells(source, destination)
-            # if transition is None:
-            #     raise ValueError(f"Transition from {AtomicShell.NAME[source]} to {AtomicShell.NAME[destination]} is "
-            #                      f"not well known.")
             self._transition = transition
             self._source = AtomicShell(element, source)
             self._destination = AtomicShell(element, destination)
