@@ -568,7 +568,7 @@ class XRayTransition:
         normalization: WeightNormalization = "default",
     ) -> float:
         if self.transition is None:
-            raise ValueError("Cannot get family of invalid transition")
+            return 0.0
         return self.get_weight(self.element, self.transition, normalization)
 
 
