@@ -462,6 +462,8 @@ class XRayTransition:
         for name in family:
             xrt = XRayTransition(element, name)
             if xrt.exists and xrt.energy < min_energy:
+                # to silence type checker: xrt.exists guarantees transition is not None
+                assert xrt.transition is not None
                 min_energy = xrt.energy
                 min_transition = xrt.transition
         return min_transition
@@ -491,9 +493,6 @@ class XRayTransition:
             )
         elif source is not None and destination is not None:
             transition = transition_from_shells(source, destination)
-            # if transition is None:
-            #     raise ValueError(f"Transition from {AtomicShell.NAME[source]} to {AtomicShell.NAME[destination]} is "
-            #                      f"not well known.")
             self._transition = transition
             self._source = AtomicShell(element, source)
             self._destination = AtomicShell(element, destination)
@@ -515,7 +514,7 @@ class XRayTransition:
         return hash((self.transition, self.source_shell, self.destination_shell))
 
     @property
-    def transition(self) -> int:
+    def transition(self) -> int | None:
         return self._transition
 
     @property
@@ -536,6 +535,8 @@ class XRayTransition:
 
     @property
     def family(self) -> int:
+        if self.transition is None:
+            raise ValueError("Cannot get family of invalid transition")
         return family_from_transition(self.transition)
 
     @property
@@ -552,12 +553,19 @@ class XRayTransition:
 
     @property
     def exists(self) -> bool:
-        return self.source.exists and self.destination.exists and self.weight() > 0.0
+        return (
+            self.transition is not None
+            and self.source.exists
+            and self.destination.exists
+            and self.weight() > 0.0
+        )
 
     def weight(
         self,
         normalization: WeightNormalization = "default",
     ) -> float:
+        if self.transition is None:
+            return 0.0
         return self.get_weight(self.element, self.transition, normalization)
 
 
