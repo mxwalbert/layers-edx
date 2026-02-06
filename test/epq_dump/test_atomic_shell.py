@@ -65,7 +65,7 @@ class TestAtomicShellProperties:
 
     def test_total_angular_momentum(self):
         assert self.ref.total_angular_momentum == approx(
-            self.shell.total_angular_momentum, rel=1e-9
+            self.shell.total_angular_momentum
         )
 
     def test_capacity(self):
@@ -92,7 +92,7 @@ class TestAtomicShellProperties:
             # EPQ uses -1.0 to indicate no algorithm supported for edge energy
             assert math.isnan(self.shell.edge_energy)
         else:
-            assert self.ref.edge_energy_ev == approx(self.shell.edge_energy, rel=1e-6)
+            assert self.ref.edge_energy_ev == approx(self.shell.edge_energy)
 
     def test_energy(self):
         if self.ref.energy_J is None:
@@ -102,4 +102,4 @@ class TestAtomicShellProperties:
             # EPQ uses -1.0 to indicate no algorithm supported for energy
             assert math.isnan(self.shell.energy)
         else:
-            assert self.ref.energy_J == approx(self.shell.energy, rel=1e-6)
+            assert self.ref.energy_J == approx(self.shell.energy)
