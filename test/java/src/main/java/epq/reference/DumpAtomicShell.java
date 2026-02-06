@@ -19,6 +19,7 @@ public final class DumpAtomicShell implements DumpModule {
       new CsvColumn("orbital_angular_momentum", INT, false),
       new CsvColumn("total_angular_momentum", DOUBLE, false),
       new CsvColumn("capacity", INT, false),
+      new CsvColumn("exists", BOOL, true),
       new CsvColumn("ground_state_occupancy", INT, true),
       new CsvColumn("edge_energy_ev", DOUBLE, true),
       new CsvColumn("energy_J", DOUBLE, true));
@@ -58,13 +59,40 @@ public final class DumpAtomicShell implements DumpModule {
     final int familyInt = AtomicShell.getFamily(shellIndex);
     final String familyName = AtomicShell.getFamilyName(familyInt);
 
-    // Get quantum numbers and structure
+    // Get quantum numbers, structure and capacity
     final int principalQuantumNumber = AtomicShell.getPrincipalQuantumNumber(shellIndex);
     final int orbitalAngularMomentum = shell.getOrbitalAngularMomentum();
     final double totalAngularMomentum = shell.getTotalAngularMomentum();
+    final int capacity = shell.getCapacity();
+
+    rowBuilder
+    .set("Z", Z)
+    .set("shell_index", shellIndex)
+    .set("shell_name_siegbahn", siegbahnName)
+    .set("shell_name_iupac", iupacName)
+    .set("shell_name_atomic", atomicName)
+    .set("family", familyName)
+    .set("principal_quantum_number", principalQuantumNumber)
+    .set("orbital_angular_momentum", orbitalAngularMomentum)
+    .set("total_angular_momentum", totalAngularMomentum)
+    .set("capacity", capacity);
+
+    // check if shell exists for element
+    Boolean exists = null;
+    try {
+      exists = shell.exists();
+    } catch (ArrayIndexOutOfBoundsException e) {
+      // Shell index out of bounds for element
+    }
+    rowBuilder.set("exists", exists);
+
+    if (exists == null || !exists) {
+      ctx.row(rowBuilder.buildRow());
+      ctx.flush();
+      return;
+    }
 
     // Get capacity and occupancy
-    final int capacity = shell.getCapacity();
     Integer groundStateOccupancy = null;
     try {
       groundStateOccupancy = shell.getGroundStateOccupancy();
@@ -93,16 +121,6 @@ public final class DumpAtomicShell implements DumpModule {
     }
 
     rowBuilder
-        .set("Z", Z)
-        .set("shell_index", shellIndex)
-        .set("shell_name_siegbahn", siegbahnName)
-        .set("shell_name_iupac", iupacName)
-        .set("shell_name_atomic", atomicName)
-        .set("family", familyName)
-        .set("principal_quantum_number", principalQuantumNumber)
-        .set("orbital_angular_momentum", orbitalAngularMomentum)
-        .set("total_angular_momentum", totalAngularMomentum)
-        .set("capacity", capacity)
         .set("ground_state_occupancy", groundStateOccupancy)
         .set("edge_energy_ev", edgeEnergy)
         .set("energy_J", energy);

@@ -1,17 +1,23 @@
 import pytest
 from pytest import approx  # type: ignore
-import itertools
 from test.epq_dump.validators import XRayTransitionRow
 from layers_edx.element import Element
 from layers_edx.xrt import XRayTransition
 from layers_edx.atomic_shell import AtomicShell
+import os
+
+FULL_SUITE = os.getenv("PYTEST_FULL_SUITE", "false").lower() == "true"
+
+if FULL_SUITE:
+    param_range = [(Z, trans) for Z in range(1, 110) for trans in range(0, 49)]
+else:
+    param_range = [
+        (5, 1),
+    ]
 
 
 @pytest.mark.epq_ref(module="XRayTransition")
-@pytest.mark.parametrize(
-    "Z, trans",
-    list(itertools.product(range(5, 6), range(1, 2))),
-)
+@pytest.mark.parametrize("Z, trans", param_range)
 class TestXRayTransitionProperties:
     @pytest.fixture(autouse=True)
     def setup_transition(self, Z: int, trans: int, java_dump: list[XRayTransitionRow]):
@@ -43,14 +49,10 @@ class TestXRayTransitionProperties:
         assert self.ref.edge_energy_eV == approx(self.xrt.edge_energy, rel=1e-3)
 
     def test_weight_default(self, require_exists: None):
-        assert self.ref.weight_default == approx(
-            self.xrt.weight("default"), rel=1e-3
-        )
+        assert self.ref.weight_default == approx(self.xrt.weight("default"), rel=1e-3)
 
     def test_weight_family(self, require_exists: None):
-        assert self.ref.weight_family == approx(
-            self.xrt.weight("family"), rel=1e-3
-        )
+        assert self.ref.weight_family == approx(self.xrt.weight("family"), rel=1e-3)
 
     def test_weight_destination(self, require_exists: None):
         assert self.ref.weight_destination == approx(

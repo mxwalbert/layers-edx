@@ -65,6 +65,7 @@ class AtomicShellRow(BaseModel):
     orbital_angular_momentum: int
     total_angular_momentum: float
     capacity: int
+    exists: bool | EmptyStrToNone
     ground_state_occupancy: int | EmptyStrToNone
     edge_energy_ev: float | EmptyStrToNone
     energy_J: float | EmptyStrToNone

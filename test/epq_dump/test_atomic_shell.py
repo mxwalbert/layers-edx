@@ -12,11 +12,13 @@ if FULL_SUITE:
     param_range = [(Z, shell) for Z in range(1, 110) for shell in range(0, 49)]
 else:
     param_range = [
+        (5, 2),  # B K-shell
         (26, 0),  # Fe K-shell
         (26, 1),  # Fe L1-shell
         (29, 0),  # Cu K-shell
         (79, 0),  # Au K-shell
         (82, 10),  # Pb specific shell
+        (109, 24),  # nonexistent shell
     ]
 
 
@@ -68,6 +70,12 @@ class TestAtomicShellProperties:
 
     def test_capacity(self):
         assert self.ref.capacity == self.shell.capacity
+
+    def test_exists(self):
+        if self.ref.exists is None:
+            pytest.skip("Exists is None in reference data")
+        else:
+            assert self.ref.exists == self.shell.exists
 
     def test_ground_state_occupancy(self):
         if self.ref.ground_state_occupancy is None:
