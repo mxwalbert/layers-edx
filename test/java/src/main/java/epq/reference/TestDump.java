@@ -52,6 +52,7 @@ public final class TestDump {
             }
         } catch (Exception e) {
             System.err.println("Exception caught in TestDump (" + e.getClass().getSimpleName() + "): " + e.getMessage());
+            e.printStackTrace(System.err);
             System.exit(1);
         }
     }
