@@ -12,7 +12,10 @@ if FULL_SUITE:
     param_range = [(Z, trans) for Z in range(1, 110) for trans in range(0, 49)]
 else:
     param_range = [
+        (4, 0),
         (5, 1),
+        (45, 9),
+        (96, 0),
     ]
 
 
@@ -27,7 +30,7 @@ class TestXRayTransitionProperties:
     @pytest.fixture
     def require_exists(self):
         """Guard: skip if the transition isn't physically valid."""
-        if not self.xrt.exists:
+        if not self.ref.exists:
             pytest.skip(f"Transition {self.xrt} does not exist.")
 
     def test_source_shell(self):
@@ -40,6 +43,8 @@ class TestXRayTransitionProperties:
         assert self.ref.family == AtomicShell.FAMILY[self.xrt.family]
 
     def test_exists(self):
+        if self.ref.exists is None:
+            pytest.skip("Reference data does not specify existence.")
         assert self.ref.exists == self.xrt.exists
 
     def test_energy(self, require_exists: None):
