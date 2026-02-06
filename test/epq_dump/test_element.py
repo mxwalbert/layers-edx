@@ -2,13 +2,18 @@ import pytest
 from pytest import approx  # type: ignore
 from test.epq_dump.validators import ElementRow
 from layers_edx.element import Element
+import os
+
+FULL_SUITE = os.getenv("PYTEST_FULL_SUITE", "false").lower() == "true"
+
+if FULL_SUITE:
+    param_range = range(1, 110)
+else:
+    param_range = [1, 6, 26, 29, 79, 82]
 
 
 @pytest.mark.epq_ref(module="Element")
-@pytest.mark.parametrize(
-    "Z",
-    range(1, 110),
-)
+@pytest.mark.parametrize("Z", param_range)
 class TestElementProperties:
     @pytest.fixture(autouse=True)
     def setup_element(self, Z: int, java_dump: list[ElementRow]):
@@ -40,4 +45,3 @@ class TestElementProperties:
         # assert self.ref.mean_ionization_potential == approx(
         #     self.element.mean_ionization_potential, rel=1e-3
         # )
-

@@ -4,13 +4,24 @@ from pytest import approx  # type: ignore
 from test.epq_dump.validators import AtomicShellRow
 from layers_edx.atomic_shell import AtomicShell
 from layers_edx.element import Element
+import os
+
+FULL_SUITE = os.getenv("PYTEST_FULL_SUITE", "false").lower() == "true"
+
+if FULL_SUITE:
+    param_range = [(Z, shell) for Z in range(1, 110) for shell in range(0, 49)]
+else:
+    param_range = [
+        (26, 0),  # Fe K-shell
+        (26, 1),  # Fe L1-shell
+        (29, 0),  # Cu K-shell
+        (79, 0),  # Au K-shell
+        (82, 10),  # Pb specific shell
+    ]
 
 
 @pytest.mark.epq_ref(module="AtomicShell")
-@pytest.mark.parametrize(
-    "Z,shell_index",
-    [(Z, shell) for Z in range(1, 110) for shell in range(0, 49)],
-)
+@pytest.mark.parametrize("Z,shell_index", param_range)
 class TestAtomicShellProperties:
     @pytest.fixture(autouse=True)
     def setup_shell(self, Z: int, shell_index: int, java_dump: list[AtomicShellRow]):

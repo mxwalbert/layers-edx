@@ -10,7 +10,7 @@ from layers_edx.atomic_shell import AtomicShell
 @pytest.mark.epq_ref(module="XRayTransition")
 @pytest.mark.parametrize(
     "Z, trans",
-    list(itertools.product(range(1, 2), range(1, 2))),
+    list(itertools.product(range(5, 6), range(1, 2))),
 )
 class TestXRayTransitionProperties:
     @pytest.fixture(autouse=True)
