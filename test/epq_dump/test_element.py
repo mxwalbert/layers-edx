@@ -28,6 +28,8 @@ class TestElementProperties:
         assert self.ref.mass_in_kg == approx(self.element.mass, rel=1e-3)
 
     def test_ionization_energy(self):
+        if self.ref.ionization_energy is None:
+            pytest.skip("Ionization energy is None in reference data")
         assert self.ref.ionization_energy == approx(
             self.element.ionization_energy, rel=1e-3
         )
