@@ -9,7 +9,7 @@ from test.epq_dump.conftest import FULL_SUITE
 def get_params():
     """Get parameters for XRT tests."""
     if FULL_SUITE:
-        return [(Z, trans) for Z in range(1, 110) for trans in range(0, 49)]
+        return [(Z, trans) for Z in range(1, 110) for trans in range(0, 77)]
     return [(4, 0), (5, 1), (45, 9), (96, 0)]
 
 @pytest.mark.epq_ref(module="XRayTransition")
