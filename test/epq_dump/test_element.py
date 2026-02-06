@@ -27,21 +27,19 @@ class TestElementProperties:
         assert self.ref.symbol == self.element.name
 
     def test_atomic_weight(self):
-        assert self.ref.atomic_weight == approx(self.element.atomic_weight, rel=1e-3)
+        assert self.ref.atomic_weight == approx(self.element.atomic_weight)
 
     def test_mass_in_kg(self):
-        assert self.ref.mass_in_kg == approx(self.element.mass, rel=1e-3)
+        assert self.ref.mass_in_kg == approx(self.element.mass)
 
     def test_ionization_energy(self):
         if self.ref.ionization_energy is None:
             pytest.skip("Ionization energy is None in reference data")
-        assert self.ref.ionization_energy == approx(
-            self.element.ionization_energy, rel=1e-3
-        )
+        assert self.ref.ionization_energy == approx(self.element.ionization_energy)
 
-    @pytest.mark.skip(reason="Not implemented yet")
+    @pytest.mark.skip(reason="Not implemented")
     def test_mean_ionization_potential(self):
         pass
         # assert self.ref.mean_ionization_potential == approx(
-        #     self.element.mean_ionization_potential, rel=1e-3
+        #     self.element.mean_ionization_potential
         # )
