@@ -42,8 +42,8 @@ class TestXRayTransitionProperties:
     def test_exists(self):
         assert self.ref.exists == self.xrt.exists
 
-    def test_energy_eV(self, require_exists: None):
-        assert self.ref.energy_eV == approx(self.xrt.energy, rel=1e-3)
+    def test_energy(self, require_exists: None):
+        assert self.ref.energy == approx(self.xrt.energy, rel=1e-3)
 
     def test_edge_energy_eV(self, require_exists: None):
         assert self.ref.edge_energy_eV == approx(self.xrt.edge_energy, rel=1e-3)

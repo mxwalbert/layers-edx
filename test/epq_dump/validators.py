@@ -42,7 +42,7 @@ class XRayTransitionRow(BaseModel):
     family: str
     is_well_known: bool
     exists: bool | EmptyStrToNone
-    energy_eV: float | EmptyStrToNone
+    energy: float | EmptyStrToNone
     edge_energy_eV: float | EmptyStrToNone
     weight_default: float | EmptyStrToNone
     weight_family: float | EmptyStrToNone
