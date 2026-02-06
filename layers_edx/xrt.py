@@ -362,7 +362,7 @@ class XRayTransition:
         elif atomic_number in [
             Element.from_name("Tc"),
             Element.from_name("Ru"),
-            Element.from_name("Th"),
+            Element.from_name("Rh"),
             Element.from_name("Pd"),
             Element.from_name("Ag"),
         ]:
