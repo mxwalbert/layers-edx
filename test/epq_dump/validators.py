@@ -30,6 +30,7 @@ class ElementRow(BaseModel):
 
     model_config = ConfigDict(str_strip_whitespace=True, strict=False)
 
+
 class XRayTransitionRow(BaseModel):
     """Model for a single XRayTransition row."""
 
@@ -51,9 +52,30 @@ class XRayTransitionRow(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True, strict=False)
 
 
+class AtomicShellRow(BaseModel):
+    """Model for a single AtomicShell row."""
+
+    Z: int
+    shell_index: int
+    shell_name_siegbahn: str
+    shell_name_iupac: str
+    shell_name_atomic: str
+    family: str
+    principal_quantum_number: int
+    orbital_angular_momentum: int
+    total_angular_momentum: float
+    capacity: int
+    ground_state_occupancy: int | EmptyStrToNone
+    edge_energy_ev: float | EmptyStrToNone
+    energy_J: float | EmptyStrToNone
+
+    model_config = ConfigDict(str_strip_whitespace=True, strict=False)
+
+
 _MODELS: Dict[str, Type[BaseModel]] = {
     "Element": ElementRow,
     "XRayTransition": XRayTransitionRow,
+    "AtomicShell": AtomicShellRow,
 }
 
 
