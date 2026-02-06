@@ -68,11 +68,15 @@ public final class DumpXRayTransition implements DumpModule {
             return;
         }
 
-        final boolean exists = xrt.exists();
-
+        Boolean exists = null;
+        try {
+            exists = xrt.exists();
+        } catch (ArrayIndexOutOfBoundsException e) {
+            // Shell index out of bounds for element
+        }
         rowBuilder.set("exists", exists);
 
-        if (!exists) {
+        if (exists == null || !exists) {
             ctx.row(rowBuilder.buildRow());
             ctx.flush();
             return;
