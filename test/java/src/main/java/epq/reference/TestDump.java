@@ -50,7 +50,7 @@ public final class TestDump {
                 runSingle(args);
             }
         } catch (Exception e) {
-            System.err.println("Fatal error: " + e.getMessage());
+            System.err.println("Exception caught in TestDump (" + e.getClass().getSimpleName() + "): " + e.getMessage());
             System.exit(1);
         }
     }
