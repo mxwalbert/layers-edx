@@ -279,10 +279,10 @@ def family_from_transition(transition: int) -> int:
 
 def weight_normalization(weights_list: llf) -> tuple[llf, llf, llf]:
     dest_len = AtomicShell.from_name("NV") - AtomicShell.from_name("K") + 1
-    dest_norm = [[0.0] * dest_len] * len(weights_list)
+    dest_norm = [[0.0] * dest_len for _ in range(len(weights_list))]
     fam_len = AtomicShell.family_from_name("N") - AtomicShell.family_from_name("K") + 1
-    fam_norm = [[0.0] * fam_len] * len(weights_list)
-    klm_norm = [[0.0] * fam_len] * len(weights_list)
+    fam_norm = [[0.0] * fam_len for _ in range(len(weights_list))]
+    klm_norm = [[0.0] * fam_len for _ in range(len(weights_list))]
     for atomic_number, weights in enumerate(weights_list[1:], start=1):
         for transition, weight in enumerate(weights):
             destination = destination_shell_from_transition(transition)
