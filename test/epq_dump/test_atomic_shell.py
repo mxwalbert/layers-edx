@@ -4,14 +4,14 @@ from pytest import approx  # type: ignore
 from test.epq_dump.validators import AtomicShellRow
 from layers_edx.atomic_shell import AtomicShell
 from layers_edx.element import Element
-import os
+from test.epq_dump.conftest import FULL_SUITE
 
-FULL_SUITE = os.getenv("PYTEST_FULL_SUITE", "false").lower() == "true"
 
-if FULL_SUITE:
-    param_range = [(Z, shell) for Z in range(1, 110) for shell in range(0, 49)]
-else:
-    param_range = [
+def get_params():
+    """Get parameters for atomic shell tests."""
+    if FULL_SUITE:
+        return [(Z, shell) for Z in range(1, 110) for shell in range(0, 49)]
+    return [
         (5, 2),  # B K-shell
         (26, 0),  # Fe K-shell
         (26, 1),  # Fe L1-shell
@@ -23,7 +23,7 @@ else:
 
 
 @pytest.mark.epq_ref(module="AtomicShell")
-@pytest.mark.parametrize("Z,shell_index", param_range)
+@pytest.mark.parametrize("Z,shell_index", get_params())
 class TestAtomicShellProperties:
     @pytest.fixture(autouse=True)
     def setup_shell(self, Z: int, shell_index: int, java_dump: list[AtomicShellRow]):
