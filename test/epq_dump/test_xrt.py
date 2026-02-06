@@ -48,21 +48,19 @@ class TestXRayTransitionProperties:
         assert self.ref.exists == self.xrt.exists
 
     def test_energy(self, require_exists: None):
-        assert self.ref.energy == approx(self.xrt.energy, rel=1e-3)
+        assert self.ref.energy == approx(self.xrt.energy)
 
     def test_edge_energy_eV(self, require_exists: None):
-        assert self.ref.edge_energy_eV == approx(self.xrt.edge_energy, rel=1e-3)
+        assert self.ref.edge_energy_eV == approx(self.xrt.edge_energy)
 
     def test_weight_default(self, require_exists: None):
-        assert self.ref.weight_default == approx(self.xrt.weight("default"), rel=1e-3)
+        assert self.ref.weight_default == approx(self.xrt.weight("default"))
 
     def test_weight_family(self, require_exists: None):
-        assert self.ref.weight_family == approx(self.xrt.weight("family"), rel=1e-3)
+        assert self.ref.weight_family == approx(self.xrt.weight("family"))
 
     def test_weight_destination(self, require_exists: None):
-        assert self.ref.weight_destination == approx(
-            self.xrt.weight("destination"), rel=1e-3
-        )
+        assert self.ref.weight_destination == approx(self.xrt.weight("destination"))
 
     def test_weight_klm(self, require_exists: None):
-        assert self.ref.weight_klm == approx(self.xrt.weight("klm"), rel=1e-3)
+        assert self.ref.weight_klm == approx(self.xrt.weight("klm"))
