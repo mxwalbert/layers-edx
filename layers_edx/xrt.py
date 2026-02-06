@@ -299,7 +299,7 @@ def weight_normalization(weights_list: llf) -> tuple[llf, llf, llf]:
                 fam_norm[atomic_number][family] = 1.0
             if klm_norm[atomic_number][family] == 0.0:
                 klm_norm[atomic_number][family] = 1.0
-    return dest_norm, fam_norm, klm_norm
+    return fam_norm, dest_norm, klm_norm
 
 
 FAMILY_NORM, DESTINATION_NORM, KLM_NORM = weight_normalization(LINE_WEIGHT)
