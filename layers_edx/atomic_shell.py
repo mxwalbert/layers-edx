@@ -436,4 +436,12 @@ class AtomicShell:
 
     @property
     def exists(self) -> bool:
-        return self.energy > 0.0
+        """
+        Check if this atomic shell exists for its element.
+
+        A shell is considered to exist if it has a non-zero edge energy
+
+        :return: True if the shell exists, False otherwise
+        :rtype: bool
+        """
+        return self.edge_energy > 0.0
