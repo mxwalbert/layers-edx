@@ -325,6 +325,53 @@ Each combination generates a unique `DumpRequest`, but Java processes all at onc
 
 ---
 
+## Test Coverage Modes
+
+By default, the pytest bridge tests a **reduced suite** of parameters to ensure fast feedback during development. For comprehensive validation, you can enable the **full suite** mode.
+
+### Reduced Suite (Default)
+
+The reduced suite tests only selected parameter combinations.
+
+**Run reduced suite**:
+
+```bash
+pytest -m epq_ref
+```
+
+This is the default and runs quickly.
+
+### Full Suite
+
+The full suite comprehensively tests all possible parameter combinations:
+
+- **Element tests**: 109 elements (Z=1 to 109)
+- **AtomicShell tests**: 109 elements × 49 shell indices = 5,341 test cases
+- **XRayTransition tests**: 109 elements × 76 transition indices = 8,284 test cases
+
+The full suite is significantly slower. Use this mode for:
+- Final validation before release
+- Comprehensive verification on CI/CD pipelines
+- Debugging edge cases across the entire periodic table
+
+**Run full suite**:
+
+```bash
+PYTEST_FULL_SUITE=true pytest -m epq_ref
+```
+
+### Environment Variable
+
+The `PYTEST_FULL_SUITE` environment variable is defined in `test/epq_dump/conftest.py`:
+
+```python
+FULL_SUITE = os.getenv("PYTEST_FULL_SUITE", "false").lower() == "true"
+```
+
+This constant is imported by test files (e.g., `test_element.py`, `test_xrt.py`, `test_atomic_shell.py`) in their `get_params()` functions to select which parameter combinations to test.
+
+---
+
 ## Troubleshooting
 
 ### Java process failed
